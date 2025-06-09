@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "773556782212",
+    "project_id": "dayenu-c67ba",
+    "storage_bucket": "dayenu-c67ba.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:773556782212:android:263ceeec6f81fb7e5b2ed1",
+        "android_client_info": {
+          "package_name": "com.example.cm_dayenu"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAYOrTBoB17vxVrS6ajtNpNpr_RePTUSr4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
