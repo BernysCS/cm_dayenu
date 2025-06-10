@@ -1,7 +1,7 @@
 import 'package:cm_dayenu/view/pantallas/mensajes.dart';
 import 'package:cm_dayenu/view/pantallas/Principal/principal.dart';
 import 'package:cm_dayenu/view/pantallas/reportes.dart';
-import 'package:cm_dayenu/view/pantallas/usuarios.dart';
+import 'package:cm_dayenu/view/pantallas/usuarios/usuarios.dart';
 import 'package:flutter/material.dart';
 
 class Navegacion extends StatefulWidget {
