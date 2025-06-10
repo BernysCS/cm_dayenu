@@ -1,5 +1,5 @@
 import 'package:cm_dayenu/firebase_options.dart';
-import 'package:cm_dayenu/view/navegacion.dart';
+import 'package:cm_dayenu/view/pantallas/login/login.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
@@ -16,7 +16,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Scaffold(body: Navegacion()),
+      home: const PantallaLogin(),
     );
   }
 }

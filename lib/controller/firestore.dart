@@ -68,4 +68,8 @@ class FirestoreService {
 
     return query.docs.isNotEmpty;
   }
+
+ //-----------------------------------------------------------------------
+ //Autenticación
+ 
 }
