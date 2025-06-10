@@ -7,8 +7,23 @@ class FirestoreService {
   );
 
   //CREAR: agregar una nueva cita
-  Future<void> agregarCita(String cita) {
-    return citas.add({'cita': cita, 'timestamp': Timestamp.now()});
+  Future<void> agregarCita({
+    required String nombre,
+    required String motivo,
+    required String sala,
+    required String telefono,
+    required double precio,
+    required DateTime fechaHora,
+  }) {
+    return citas.add({
+      'nombre': nombre,
+      'motivo': motivo,
+      'sala': sala,
+      'telefono': telefono,
+      'precio': precio,
+      'fechaHora': Timestamp.fromDate(fechaHora),
+      'timestamp': Timestamp.now(),
+    });
   }
 
   //LEER: obtener citas de la base de datos
@@ -19,9 +34,22 @@ class FirestoreService {
   }
 
   //ACTUALIZAR: actualizar citas dado un id de documento
-  Future<void> actualizarCita(String docID, String nuevaCita) {
+  Future<void> actualizarCita(
+    String docID,
+    String nombre,
+    String motivo,
+    String sala,
+    String telefono,
+    double precio,
+    DateTime fechaHora,
+  ) {
     return citas.doc(docID).update({
-      'cita': nuevaCita,
+      'nombre': nombre,
+      'motivo': motivo,
+      'sala': sala,
+      'telefono': telefono,
+      'precio': precio,
+      'fechaHora': Timestamp.fromDate(fechaHora),
       'timestamp': Timestamp.now(),
     });
   }
@@ -29,5 +57,15 @@ class FirestoreService {
   //ELIMINAR: borrar citas dado un id de documento
   Future<void> eliminarCita(String docID) {
     return citas.doc(docID).delete();
+  }
+
+  //consulta a la base de datos si existe una cita en la misma hora y fecha
+  Future<bool> existeCitaEnFechaHora(DateTime fechaHora) async {
+    QuerySnapshot query =
+        await citas
+            .where('fechaHora', isEqualTo: Timestamp.fromDate(fechaHora))
+            .get();
+
+    return query.docs.isNotEmpty;
   }
 }

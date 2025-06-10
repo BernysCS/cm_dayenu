@@ -13,37 +13,211 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
   //firestore
   final FirestoreService firestoreService = FirestoreService();
 
-  //controlador de texto
+  //controladores
   final TextEditingController textoControlador = TextEditingController();
+  final TextEditingController nombreController = TextEditingController();
+  final TextEditingController motivoController = TextEditingController();
+  final TextEditingController salaController = TextEditingController();
+  final TextEditingController telefonoController = TextEditingController();
+  final TextEditingController precioController = TextEditingController();
+  DateTime? fechaSeleccionada;
+  TimeOfDay? horaSeleccionada;
 
   //abre un cuadro de dialogo para agregar una cita
-  void abrirCajaCita(String? docID) {
+  void abrirCajaCita({String? docID, Map<String, dynamic>? datos}) {
+    if (datos != null) {
+      // Carga los otros datos
+      nombreController.text = datos['nombre'] ?? '';
+      motivoController.text = datos['motivo'] ?? '';
+      salaController.text = datos['sala'] ?? '';
+      telefonoController.text = datos['telefono'] ?? '';
+      precioController.text = datos['precio']?.toString() ?? '';
+
+      // Carga fecha y hora si existen
+      Timestamp? ts = datos['fechaHora'];
+      if (ts != null) {
+        fechaSeleccionada = ts.toDate();
+        horaSeleccionada = TimeOfDay(
+          hour: fechaSeleccionada!.hour,
+          minute: fechaSeleccionada!.minute,
+        );
+      }
+    } else {
+      nombreController.clear();
+      motivoController.clear();
+      salaController.clear();
+      telefonoController.clear();
+      precioController.clear();
+      fechaSeleccionada = null;
+      horaSeleccionada = null;
+    }
+
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            content: TextField(controller: textoControlador),
+            title: Text(docID == null ? 'Agregar cita' : 'Editar cita'),
+            content: SingleChildScrollView(
+              child: Column(
+                children: [
+                  TextField(
+                    controller: nombreController,
+                    decoration: InputDecoration(labelText: 'Nombre'),
+                  ),
+                  TextField(
+                    controller: motivoController,
+                    decoration: InputDecoration(labelText: 'Motivo'),
+                  ),
+                  TextField(
+                    controller: salaController,
+                    decoration: InputDecoration(labelText: 'Sala'),
+                  ),
+                  TextField(
+                    controller: telefonoController,
+                    decoration: InputDecoration(labelText: 'Teléfono'),
+                  ),
+                  TextField(
+                    controller: precioController,
+                    decoration: InputDecoration(labelText: 'Precio'),
+                    keyboardType: TextInputType.number,
+                  ),
+
+                  SizedBox(height: 10),
+                  // Botón para elegir fecha
+                  ElevatedButton(
+                    onPressed: () async {
+                      DateTime? fecha = await showDatePicker(
+                        context: context,
+                        initialDate: fechaSeleccionada ?? DateTime.now(),
+                        firstDate: DateTime(2023),
+                        lastDate: DateTime(2100),
+                      );
+                      if (fecha != null) {
+                        setState(() {
+                          fechaSeleccionada = fecha;
+                        });
+                      }
+                    },
+                    child: Text(
+                      fechaSeleccionada == null
+                          ? 'Seleccionar fecha'
+                          : 'Fecha: ${fechaSeleccionada!.day}/${fechaSeleccionada!.month}/${fechaSeleccionada!.year}',
+                    ),
+                  ),
+
+                  // Botón para elegir hora
+                  ElevatedButton(
+                    onPressed: () async {
+                      TimeOfDay? hora = await showTimePicker(
+                        context: context,
+                        initialTime: horaSeleccionada ?? TimeOfDay.now(),
+                      );
+                      if (hora != null) {
+                        setState(() {
+                          horaSeleccionada = hora;
+                        });
+                      }
+                    },
+                    child: Text(
+                      horaSeleccionada == null
+                          ? 'Seleccionar hora'
+                          : 'Hora: ${horaSeleccionada!.format(context)}',
+                    ),
+                  ),
+                ],
+              ),
+            ),
             actions: [
-              //boton para guardar
               ElevatedButton(
-                onPressed: () {
-                  // agregar una nueva cita
-                  if (docID == null) {
-                    firestoreService.agregarCita(textoControlador.text);
+                onPressed: () async {
+                  DateTime fechaHora = DateTime(
+                    fechaSeleccionada?.year ?? DateTime.now().year,
+                    fechaSeleccionada?.month ?? DateTime.now().month,
+                    fechaSeleccionada?.day ?? DateTime.now().day,
+                    horaSeleccionada?.hour ?? 0,
+                    horaSeleccionada?.minute ?? 0,
+                  );
+
+                  // Verificar si ya existe una cita en la misma fecha y hora
+                  bool existe = await firestoreService.existeCitaEnFechaHora(
+                    fechaHora,
+                  );
+
+                  // Si es una nueva cita y ya existe, mostrar error
+                  if (existe && docID == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Ya existe una cita en esa fecha y hora.',
+                        ),
+                      ),
+                    );
+                    return;
                   }
-                  //actualizando una cita existente
-                  else {
-                    firestoreService.actualizarCita(
+
+                  // Si es una edición, verificar si el nuevo horario no choca con otra cita (distinta)
+                  if (existe && docID != null) {
+                    // Traer todas las citas con esa fechaHora
+                    QuerySnapshot duplicados =
+                        await FirebaseFirestore.instance
+                            .collection('citas')
+                            .where(
+                              'fechaHora',
+                              isEqualTo: Timestamp.fromDate(fechaHora),
+                            )
+                            .get();
+
+                    // Si hay otra cita con esa fecha y NO es esta misma que estamos editando
+                    bool hayConflicto = duplicados.docs.any(
+                      (doc) => doc.id != docID,
+                    );
+                    if (hayConflicto) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Otra cita ya está agendada en esa fecha y hora.',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+                  }
+
+                  // Guardar o actualizar cita
+                  if (docID == null) {
+                    await firestoreService.agregarCita(
+                      nombre: nombreController.text,
+                      motivo: motivoController.text,
+                      sala: salaController.text,
+                      telefono: telefonoController.text,
+                      precio: double.tryParse(precioController.text) ?? 0,
+                      fechaHora: fechaHora,
+                    );
+                  } else {
+                    await firestoreService.actualizarCita(
                       docID,
-                      textoControlador.text,
+                      nombreController.text,
+                      motivoController.text,
+                      salaController.text,
+                      telefonoController.text,
+                      double.tryParse(precioController.text) ?? 0,
+                      fechaHora,
                     );
                   }
-                  // limpiar el texto del controlador
-                  textoControlador.clear();
-                  //cerrar la caja
+
+                  // Limpiar campos
+                  nombreController.clear();
+                  motivoController.clear();
+                  salaController.clear();
+                  telefonoController.clear();
+                  precioController.clear();
+                  fechaSeleccionada = null;
+                  horaSeleccionada = null;
+
                   Navigator.pop(context);
                 },
-                child: Text('Agregar'),
+
+                child: Text(docID == null ? 'Guardar' : 'Actualizar'),
               ),
             ],
           ),
@@ -55,7 +229,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
     return Scaffold(
       appBar: AppBar(title: Text('Dayenú')),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => abrirCajaCita(null),
+        onPressed: () => abrirCajaCita(),
         child: Icon(Icons.add),
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -76,18 +250,45 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                 //obtener nota de cada documento
                 Map<String, dynamic> data =
                     document.data() as Map<String, dynamic>;
-                String textoCita = data['cita'];
+                String nombre = data['nombre']?.toString() ?? 'Sin nombre';
+                String motivo = data['motivo']?.toString() ?? 'Sin motivo';
+                String sala = data['sala']?.toString() ?? 'Sin sala';
+                String telefono =
+                    data['telefono']?.toString() ?? 'Sin teléfono';
+                double precio =
+                    (data['precio'] != null)
+                        ? double.tryParse(data['precio'].toString()) ?? 0.0
+                        : 0.0;
+
+                Timestamp ts = data['fechaHora'];
+                DateTime fechaHora = ts.toDate();
+
+                String fechaStr =
+                    '${fechaHora.day}/${fechaHora.month}/${fechaHora.year}';
+                String horaStr =
+                    '${fechaHora.hour.toString().padLeft(2, '0')}:${fechaHora.minute.toString().padLeft(2, '0')}';
 
                 //mostrar como un elemento de lista
                 return ListTile(
-                  title: Text(textoCita),
+                  title: Text(nombre),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Fecha: $fechaStr  Hora: $horaStr'),
+                      Text('Motivo: $motivo'),
+                      Text('Sala: $sala'),
+                      Text('Teléfono: $telefono'),
+                      Text('Precio: \$${precio.toStringAsFixed(2)}'),
+                    ],
+                  ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      //boton actualizar
+                      //boton editar
                       IconButton(
-                        onPressed: () => abrirCajaCita(docID),
                         icon: Icon(Icons.edit),
+                        onPressed:
+                            () => abrirCajaCita(docID: docID, datos: data),
                       ),
                       //boton eliminar
                       IconButton(
