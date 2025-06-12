@@ -1,3 +1,4 @@
+import 'package:cm_dayenu/view/pantallas/usuarios/pantalla_pacientes.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -9,29 +10,87 @@ class PantallaUsuarios extends StatefulWidget {
 }
 
 class _PantallaUsuariosState extends State<PantallaUsuarios> {
-  final TextEditingController _usuarioController = TextEditingController();
-  final TextEditingController _contrasenaController = TextEditingController();
-  String _rolSeleccionado = 'admin';
+  void _mostrarFormulario({DocumentSnapshot? usuarioExistente}) {
+    final TextEditingController _usuarioController = TextEditingController(
+      text: usuarioExistente != null ? usuarioExistente['usuario'] : '',
+    );
+    final TextEditingController _contrasenaController = TextEditingController(
+      text: usuarioExistente != null ? usuarioExistente['contrasena'] : '',
+    );
+    String _rolSeleccionado = usuarioExistente != null ? usuarioExistente['rol'] : 'admin';
 
-  Future<void> agregarUsuario() async {
-    String usuario = _usuarioController.text.trim();
-    String contrasena = _contrasenaController.text.trim();
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(usuarioExistente == null ? 'Agregar Usuario' : 'Editar Usuario'),
+        content: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(
+                controller: _usuarioController,
+                decoration: const InputDecoration(labelText: 'Usuario'),
+              ),
+              TextField(
+                controller: _contrasenaController,
+                decoration: const InputDecoration(labelText: 'Contraseña'),
+                obscureText: true,
+              ),
+              DropdownButton<String>(
+                value: _rolSeleccionado,
+                onChanged: (String? nuevoValor) {
+                  if (nuevoValor != null) {
+                    setState(() => _rolSeleccionado = nuevoValor);
+                  }
+                },
+                items: const [
+                  DropdownMenuItem(value: 'admin', child: Text('Admin')),
+                  DropdownMenuItem(value: 'doctor', child: Text('Doctor')),
+                  DropdownMenuItem(value: 'recepcionista', child: Text('Recepcionista')),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final usuario = _usuarioController.text.trim();
+              final contrasena = _contrasenaController.text.trim();
+              if (usuario.isNotEmpty && contrasena.isNotEmpty) {
+                if (usuarioExistente == null) {
+                  // Crear nuevo
+                  await FirebaseFirestore.instance.collection('usuarios').add({
+                    'usuario': usuario,
+                    'contrasena': contrasena,
+                    'rol': _rolSeleccionado,
+                  });
+                } else {
+                  // Editar existente
+                  await FirebaseFirestore.instance
+                      .collection('usuarios')
+                      .doc(usuarioExistente.id)
+                      .update({
+                    'usuario': usuario,
+                    'contrasena': contrasena,
+                    'rol': _rolSeleccionado,
+                  });
+                }
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+  }
 
-    if (usuario.isNotEmpty && contrasena.isNotEmpty) {
-      await FirebaseFirestore.instance.collection('usuarios').add({
-        'usuario': usuario,
-        'contrasena': contrasena,
-        'rol': _rolSeleccionado,
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Usuario agregado correctamente')),
-      );
-
-      _usuarioController.clear();
-      _contrasenaController.clear();
-      setState(() => _rolSeleccionado = 'admin');
-    }
+  Future<void> _eliminarUsuario(String id) async {
+    await FirebaseFirestore.instance.collection('usuarios').doc(id).delete();
   }
 
   @override
@@ -50,42 +109,50 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
         ),
         body: TabBarView(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: _usuarioController,
-                    decoration: const InputDecoration(labelText: 'Usuario'),
-                  ),
-                  TextField(
-                    controller: _contrasenaController,
-                    decoration: const InputDecoration(labelText: 'Contraseña'),
-                    obscureText: true,
-                  ),
-                  DropdownButton<String>(
-                    value: _rolSeleccionado,
-                    onChanged: (String? nuevoValor) {
-                      setState(() {
-                        _rolSeleccionado = nuevoValor!;
-                      });
-                    },
-                    items: const [
-                      DropdownMenuItem(value: 'admin', child: Text('Admin')),
-                      DropdownMenuItem(value: 'doctor', child: Text('Doctor')),
-                      DropdownMenuItem(value: 'recepcionista', child: Text('Recepcionista')),
-                    ],
-                  ),
-                  ElevatedButton(
-                    onPressed: agregarUsuario,
-                    child: const Text('Agregar Usuario'),
-                  ),
-                ],
-              ),
+            // Lista de usuarios (Personal)
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance.collection('usuarios').snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) return const Text('Error al cargar usuarios');
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final usuarios = snapshot.data!.docs;
+
+                return ListView.builder(
+                  itemCount: usuarios.length,
+                  itemBuilder: (context, index) {
+                    final usuario = usuarios[index];
+                    return ListTile(
+                      title: Text(usuario['usuario']),
+                      subtitle: Text('Rol: ${usuario['rol']}'),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () => _mostrarFormulario(usuarioExistente: usuario),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () => _eliminarUsuario(usuario.id),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
             ),
-            const Center(child: Icon(Icons.supervised_user_circle_sharp)),
+
+            // Segunda pestaña (Pacientes)
+            const PantallaPacientes(),
           ],
         ),
+        // floatingActionButton: FloatingActionButton(
+        //   onPressed: () => _mostrarFormulario(),
+        //   child: const Icon(Icons.person_add),
+        // ),
       ),
     );
   }
