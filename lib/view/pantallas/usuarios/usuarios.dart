@@ -149,10 +149,10 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
             const PantallaPacientes(),
           ],
         ),
-        // floatingActionButton: FloatingActionButton(
-        //   onPressed: () => _mostrarFormulario(),
-        //   child: const Icon(Icons.person_add),
-        // ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () => _mostrarFormulario(),
+          child: const Icon(Icons.person_add),
+        ),
       ),
     );
   }
