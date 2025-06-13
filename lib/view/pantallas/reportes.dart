@@ -42,7 +42,35 @@ class _PantallaReportesState extends State<PantallaReportes> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Reporte mensual')),
+      appBar: AppBar(
+        //agregue el icono para la inforacion de reportes
+        title: Text('Reporte Mensual'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            //icono nuevo de la libreria Icon para informacion
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text('Información'),
+                    content: const Text(
+                      'Informacion sobre los reportes, actividad, usuarios pacientes e ingresos.',
+                    ),
+                    actions: [
+                      ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Cerrar'),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

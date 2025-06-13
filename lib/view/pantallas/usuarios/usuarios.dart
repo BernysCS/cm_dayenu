@@ -73,7 +73,7 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
                   ),
                 ),
                 actions: [
-                  TextButton(
+                  ElevatedButton(
                     onPressed: () => Navigator.pop(context),
                     child: const Text('Cancelar'),
                   ),
@@ -123,6 +123,31 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Usuarios'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.info_outline),
+              //icono nuevo de la libreria Icon para informacion
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Información'),
+                      content: const Text(
+                        'Pagina de informacion sobre usuarios: personal y paciente.',
+                      ),
+                      actions: [
+                        ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Cerrar'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+          ],
           bottom: const TabBar(
             tabs: [Tab(text: 'Personal'), Tab(text: 'Pacientes')],
           ),
@@ -165,7 +190,40 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
                               ),
                               IconButton(
                                 icon: const Icon(Icons.delete),
-                                onPressed: () => _eliminarUsuario(usuario.id),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: const Text('¿Eliminar usuario?'),
+                                        content: const Text(
+                                          '¿Estás seguro de que deseas eliminar este usuario? Una vez elimando no puede revertir la accion',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(
+                                                context,
+                                              ).pop(); // Cierra el diálogo
+                                            },
+                                            child: const Text('Cancelar'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              _eliminarUsuario(
+                                                usuario.id,
+                                              ); // Elimina el usuario
+                                              Navigator.of(
+                                                context,
+                                              ).pop(); // Cierra el diálogo
+                                            },
+                                            child: const Text('Eliminar'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
                               ),
                             ],
                           ),
@@ -180,9 +238,7 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
                       child: Center(
                         child: IconButton(
                           iconSize: 56,
-                          icon: const Icon(
-                            Icons.add_circle,
-                          ),
+                          icon: const Icon(Icons.add_circle),
                           onPressed: () => _mostrarFormulario(),
                           tooltip: 'Agregar Usuario',
                         ),
@@ -194,10 +250,9 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
             ),
 
             // Segunda pestaña (Pacientes)
-            PantallaPacientes()
+            PantallaPacientes(),
           ],
         ),
-
       ),
     );
   }

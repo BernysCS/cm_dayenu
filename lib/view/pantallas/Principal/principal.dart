@@ -71,10 +71,12 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                   TextField(
                     controller: salaController,
                     decoration: InputDecoration(labelText: 'Sala'),
+                    keyboardType: TextInputType.number,
                   ),
                   TextField(
                     controller: telefonoController,
                     decoration: InputDecoration(labelText: 'Teléfono'),
+                    keyboardType: TextInputType.phone,
                   ),
                   TextField(
                     controller: precioController,
@@ -128,6 +130,24 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
               ),
             ),
             actions: [
+              // boton descartar anadi este boton aca
+              ElevatedButton(
+                onPressed: () {
+                  // descartar
+                  nombreController.clear();
+                  motivoController.clear();
+                  salaController.clear();
+                  telefonoController.clear();
+                  precioController.clear();
+                  fechaSeleccionada = null;
+                  horaSeleccionada = null;
+
+                  // cerra el dialofo
+                  Navigator.pop(context);
+                },
+                child: const Text('Descartar'),
+              ),
+
               ElevatedButton(
                 onPressed: () async {
                   DateTime fechaHora = DateTime(
@@ -227,7 +247,34 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Dayenú')),
+      appBar: AppBar(
+        title: Text('Dayenú'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            //icono nuevo de la libreria Icon para informacion
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text('Información'),
+                    content: const Text(
+                      'Pagina principal de creacion de citas.',
+                    ),
+                    actions: [
+                      ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Cerrar'),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => abrirCajaCita(),
         child: Icon(Icons.add),
@@ -290,10 +337,38 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                         onPressed:
                             () => abrirCajaCita(docID: docID, datos: data),
                       ),
+
                       //boton eliminar
                       IconButton(
-                        onPressed: () => firestoreService.eliminarCita(docID),
-                        icon: Icon(Icons.delete),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text('¿Elimiacion de cita?'),
+                                content: const Text(
+                                  '¿Estás seguro de que deseas eliminar dicha cita?',
+                                ),
+                                actions: [
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('Cancelar'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      firestoreService.eliminarCita(docID);
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('Eliminar'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        icon: const Icon(Icons.delete),
                       ),
                     ],
                   ),
