@@ -31,9 +31,37 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
     }
   }
 
+  void _mostrarInfoDialog() {
+    showDialog(
+      context: context,
+      builder:
+          (_) => AlertDialog(
+            title: const Text("Información"),
+            content: const Text(
+              "Aquí puedes seleccionar un mensaje rápido o personalizar uno para enviar por WhatsApp u otra aplicacion.",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cerrar"),
+              ),
+            ],
+          ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Dayenú - Mensajes'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: _mostrarInfoDialog,
+          ),
+        ],
+      ),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
@@ -42,7 +70,10 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
               padding: const EdgeInsets.all(16),
               child: Text(
                 "Mensajes rápidos",
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             Expanded(
