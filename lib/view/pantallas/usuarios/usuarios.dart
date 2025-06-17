@@ -11,12 +11,17 @@ class PantallaUsuarios extends StatefulWidget {
 
 class _PantallaUsuariosState extends State<PantallaUsuarios> {
   void _mostrarFormulario({DocumentSnapshot? usuarioExistente}) {
+    final _formKey = GlobalKey<FormState>();
+
     final TextEditingController _usuarioController = TextEditingController(
       text: usuarioExistente != null ? usuarioExistente['usuario'] : '',
     );
     final TextEditingController _contrasenaController = TextEditingController(
       text: usuarioExistente != null ? usuarioExistente['contrasena'] : '',
     );
+    final TextEditingController _confirmarContrasenaController =
+        TextEditingController();
+
     String _rolSeleccionado =
         usuarioExistente != null ? usuarioExistente['rol'] : 'admin';
 
@@ -32,44 +37,82 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
                       : 'Editar Usuario',
                 ),
                 content: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      TextField(
-                        controller: _usuarioController,
-                        decoration: const InputDecoration(labelText: 'Usuario'),
-                      ),
-                      TextField(
-                        controller: _contrasenaController,
-                        decoration: const InputDecoration(
-                          labelText: 'Contraseña',
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          controller: _usuarioController,
+                          decoration: const InputDecoration(
+                            labelText: 'Usuario',
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Por favor ingresa un nombre de usuario';
+                            }
+                            return null;
+                          },
                         ),
-                        obscureText: true,
-                      ),
-                      DropdownButton<String>(
-                        value: _rolSeleccionado,
-                        onChanged: (String? nuevoValor) {
-                          if (nuevoValor != null) {
-                            setStateDialog(
-                              () => _rolSeleccionado = nuevoValor,
-                            ); // Usamos el setState local
-                          }
-                        },
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'admin',
-                            child: Text('Admin'),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _contrasenaController,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Contraseña',
                           ),
-                          DropdownMenuItem(
-                            value: 'doctor',
-                            child: Text('Doctor'),
+                          validator: (value) {
+                            if (value == null || value.trim().length < 6) {
+                              return 'La contraseña debe tener al menos 6 caracteres';
+                            }
+                            return null;
+                          },
+                        ),
+                        TextFormField(
+                          controller: _confirmarContrasenaController,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Confirmacion de contraseña',
                           ),
-                          DropdownMenuItem(
-                            value: 'recepcionista',
-                            child: Text('Recepcionista'),
-                          ),
-                        ],
-                      ),
-                    ],
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Por favor confirma la contraseña';
+                            }
+                            if (value.trim() !=
+                                _contrasenaController.text.trim()) {
+                              return 'Las contraseñas no coinciden';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<String>(
+                          value: _rolSeleccionado,
+                          decoration: const InputDecoration(labelText: 'Rol'),
+                          onChanged: (String? nuevoValor) {
+                            if (nuevoValor != null) {
+                              setStateDialog(() {
+                                _rolSeleccionado = nuevoValor;
+                              });
+                            }
+                          },
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'admin',
+                              child: Text('Admin'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'doctor',
+                              child: Text('Doctor'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'recepcionista',
+                              child: Text('Recepcionista'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 actions: [
@@ -79,9 +122,10 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
                   ),
                   ElevatedButton(
                     onPressed: () async {
-                      final usuario = _usuarioController.text.trim();
-                      final contrasena = _contrasenaController.text.trim();
-                      if (usuario.isNotEmpty && contrasena.isNotEmpty) {
+                      if (_formKey.currentState!.validate()) {
+                        final usuario = _usuarioController.text.trim();
+                        final contrasena = _contrasenaController.text.trim();
+
                         if (usuarioExistente == null) {
                           await FirebaseFirestore.instance
                               .collection('usuarios')
@@ -99,6 +143,30 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
                                 'contrasena': contrasena,
                                 'rol': _rolSeleccionado,
                               });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            /*tipo de mensaje visto en clase donde dentro del contexto
+                            mostrara un barra snack cercana al teclado**/
+                            SnackBar(
+                              content: const Text(
+                                '¡Usuario creado exitosamente!',
+                              ),
+                              backgroundColor:
+                                  Colors //Lissy agregue estilo de color que contrste con su diseno!!
+                                      .lightGreen,
+                              // agregue un snackbar para creacion exitosa
+                              duration: const Duration(
+                                seconds: 2,
+                              ), // Se quita despues de 2''
+                              behavior:
+                                  //define cómo y dónde aparece visualmente el SnackBar en pantalla.
+                                  SnackBarBehavior
+                                      .floating, // Flotante (opcional, se ve más moderno)
+                              shape: RoundedRectangleBorder(
+                                // Borde redondeado (opcional)
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          );
                         }
                         Navigator.pop(context);
                       }
