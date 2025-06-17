@@ -27,12 +27,13 @@ class _PantallaLoginState extends State<PantallaLogin> {
     }
 
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('usuarios')
-          .where('usuario', isEqualTo: usuario)
-          .where('contrasena', isEqualTo: contrasena)
-          .limit(1)
-          .get();
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('usuarios')
+              .where('usuario', isEqualTo: usuario)
+              .where('contrasena', isEqualTo: contrasena)
+              .limit(1)
+              .get();
 
       if (snapshot.docs.isEmpty) {
         setState(() {
@@ -81,10 +82,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
               child: const Text('Ingresar'),
             ),
             const SizedBox(height: 20),
-            Text(
-              _error,
-              style: const TextStyle(color: Colors.red),
-            ),
+            Text(_error, style: const TextStyle(color: Colors.red)),
           ],
         ),
       ),

@@ -10,6 +10,8 @@ class PantallaPacientes extends StatefulWidget {
 
 class _PantallaPacientesState extends State<PantallaPacientes> {
   void _mostrarFormulario({DocumentSnapshot? pacienteExistente}) {
+    final _formKey = GlobalKey<FormState>();
+
     final TextEditingController _nombreController = TextEditingController(
       text: pacienteExistente != null ? pacienteExistente['nombre'] : '',
     );
@@ -41,33 +43,99 @@ class _PantallaPacientesState extends State<PantallaPacientes> {
                   : 'Editar Paciente',
             ),
             content: SingleChildScrollView(
-              child: Column(
-                children: [
-                  TextField(
-                    controller: _nombreController,
-                    decoration: const InputDecoration(labelText: 'Nombre'),
-                  ),
-                  TextField(
-                    controller: _edadController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Edad'),
-                  ),
-                  TextField(
-                    controller: _pesoController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Peso (kg)'),
-                  ),
-                  TextField(
-                    controller: _alturaController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Altura (cm)'),
-                  ),
-                  TextField(
-                    controller: _dniController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'DNI'),
-                  ),
-                ],
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _nombreController,
+                      decoration: const InputDecoration(labelText: 'Nombre'),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Ingrese un nombre';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: _edadController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Edad'),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Ingrese la edad';
+                        }
+                        final edad = int.tryParse(value.trim());
+                        if (edad == null) {
+                          return 'Edad inválida';
+                        }
+                        if (edad <= 0) {
+                          return 'Edad debe ser mayor a cero';
+                        }
+                        if (edad > 120) {
+                          return 'Edad debe ser menor de 120';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: _pesoController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Peso (kg)'),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Ingrese el peso';
+                        }
+                        final peso = double.tryParse(value.trim());
+                        if (peso == null) {
+                          return 'Peso inválido';
+                        }
+                        if (peso <= 0 || peso > 300) {
+                          return 'Ingrese un peso mayor a 0 y menor 300';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: _alturaController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Altura (cm)',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Debe ingresar la altura';
+                        }
+                        final altura = double.tryParse(value.trim());
+                        if (altura == null) {
+                          return 'Altura inválida';
+                        }
+                        if (altura <= 0) {
+                          return 'La altura debe ser mayor a 0 cm';
+                        }
+                        if (altura > 300) {
+                          return 'La altura debe ser  menor a 300cm';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: _dniController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'DNI'),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Ingrese el DNI';
+                        }
+                        final dni = int.tryParse(value);
+                        if (dni == null || dni <= 0) {
+                          return 'DNI debe ser mayot a cero';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
             actions: [
@@ -77,15 +145,15 @@ class _PantallaPacientesState extends State<PantallaPacientes> {
               ),
               ElevatedButton(
                 onPressed: () async {
-                  final nombre = _nombreController.text.trim();
-                  final edad = int.tryParse(_edadController.text.trim()) ?? 0;
-                  final peso =
-                      double.tryParse(_pesoController.text.trim()) ?? 0.0;
-                  final altura =
-                      double.tryParse(_alturaController.text.trim()) ?? 0.0;
-                  final dni = _dniController.text.trim();
+                  if (_formKey.currentState!.validate()) {
+                    final nombre = _nombreController.text.trim();
+                    final edad = int.tryParse(_edadController.text.trim()) ?? 0;
+                    final peso =
+                        double.tryParse(_pesoController.text.trim()) ?? 0.0;
+                    final altura =
+                        double.tryParse(_alturaController.text.trim()) ?? 0.0;
+                    final dni = _dniController.text.trim();
 
-                  if (nombre.isNotEmpty && dni.isNotEmpty) {
                     if (pacienteExistente == null) {
                       await FirebaseFirestore.instance
                           .collection('pacientes')
@@ -161,7 +229,7 @@ class _PantallaPacientesState extends State<PantallaPacientes> {
                             return AlertDialog(
                               title: const Text('¿Eliminar Paciente?'),
                               content: const Text(
-                                '¿Estás seguro de que deseas eliminar este paciente? Una vez elimando no puede revertir la accion',
+                                '¿Estás seguro de que deseas eliminar este paciente? Una vez eliminado no puede revertir la acción.',
                               ),
                               actions: [
                                 ElevatedButton(

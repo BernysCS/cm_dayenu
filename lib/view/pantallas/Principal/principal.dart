@@ -10,30 +10,25 @@ class PantallaPrincipal extends StatefulWidget {
 }
 
 class _PantallaPrincipalState extends State<PantallaPrincipal> {
-  //firestore
   final FirestoreService firestoreService = FirestoreService();
 
-  //controladores
-  final TextEditingController textoControlador = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController nombreController = TextEditingController();
   final TextEditingController motivoController = TextEditingController();
   final TextEditingController salaController = TextEditingController();
   final TextEditingController telefonoController = TextEditingController();
   final TextEditingController precioController = TextEditingController();
+
   DateTime? fechaSeleccionada;
   TimeOfDay? horaSeleccionada;
 
-  //abre un cuadro de dialogo para agregar una cita
   void abrirCajaCita({String? docID, Map<String, dynamic>? datos}) {
     if (datos != null) {
-      // Carga los otros datos
       nombreController.text = datos['nombre'] ?? '';
       motivoController.text = datos['motivo'] ?? '';
       salaController.text = datos['sala'] ?? '';
       telefonoController.text = datos['telefono'] ?? '';
       precioController.text = datos['precio']?.toString() ?? '';
-
-      // Carga fecha y hora si existen
       Timestamp? ts = datos['fechaHora'];
       if (ts != null) {
         fechaSeleccionada = ts.toDate();
@@ -58,82 +53,120 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
           (context) => AlertDialog(
             title: Text(docID == null ? 'Agregar cita' : 'Editar cita'),
             content: SingleChildScrollView(
-              child: Column(
-                children: [
-                  TextField(
-                    controller: nombreController,
-                    decoration: InputDecoration(labelText: 'Nombre'),
-                  ),
-                  TextField(
-                    controller: motivoController,
-                    decoration: InputDecoration(labelText: 'Motivo'),
-                  ),
-                  TextField(
-                    controller: salaController,
-                    decoration: InputDecoration(labelText: 'Sala'),
-                    keyboardType: TextInputType.number,
-                  ),
-                  TextField(
-                    controller: telefonoController,
-                    decoration: InputDecoration(labelText: 'Teléfono'),
-                    keyboardType: TextInputType.phone,
-                  ),
-                  TextField(
-                    controller: precioController,
-                    decoration: InputDecoration(labelText: 'Precio'),
-                    keyboardType: TextInputType.number,
-                  ),
-
-                  SizedBox(height: 10),
-                  // Botón para elegir fecha
-                  ElevatedButton(
-                    onPressed: () async {
-                      DateTime? fecha = await showDatePicker(
-                        context: context,
-                        initialDate: fechaSeleccionada ?? DateTime.now(),
-                        firstDate: DateTime(2023),
-                        lastDate: DateTime(2100),
-                      );
-                      if (fecha != null) {
-                        setState(() {
-                          fechaSeleccionada = fecha;
-                        });
-                      }
-                    },
-                    child: Text(
-                      fechaSeleccionada == null
-                          ? 'Seleccionar fecha'
-                          : 'Fecha: ${fechaSeleccionada!.day}/${fechaSeleccionada!.month}/${fechaSeleccionada!.year}',
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: nombreController,
+                      decoration: InputDecoration(labelText: 'Nombre'),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Debe de ingresar un nombre';
+                        }
+                        return null;
+                      },
                     ),
-                  ),
-
-                  // Botón para elegir hora
-                  ElevatedButton(
-                    onPressed: () async {
-                      TimeOfDay? hora = await showTimePicker(
-                        context: context,
-                        initialTime: horaSeleccionada ?? TimeOfDay.now(),
-                      );
-                      if (hora != null) {
-                        setState(() {
-                          horaSeleccionada = hora;
-                        });
-                      }
-                    },
-                    child: Text(
-                      horaSeleccionada == null
-                          ? 'Seleccionar hora'
-                          : 'Hora: ${horaSeleccionada!.format(context)}',
+                    TextFormField(
+                      controller: motivoController,
+                      decoration: InputDecoration(labelText: 'Motivo'),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Debe de ingresar un motivo';
+                        }
+                        return null;
+                      },
                     ),
-                  ),
-                ],
+                    TextFormField(
+                      controller: salaController,
+                      decoration: InputDecoration(labelText: 'Sala'),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Debe ingresar una sala';
+                        }
+                        final numero = int.tryParse(value);
+                        //esta variable final hace que
+                        //int.tryParse(value) convierte el texto a número, o da null si el texto no es válido.
+                        if (numero == null || numero <= 0) {
+                          return 'Numero de sala invalido';
+                        }
+                        return null;
+                      },
+                    ),
+
+                    TextFormField(
+                      controller: telefonoController,
+                      decoration: InputDecoration(labelText: 'Teléfono'),
+                      keyboardType: TextInputType.phone,
+                      validator: (value) {
+                        if (value == null || value.length < 8) {
+                          return 'Debe ingresar un teléfono valido';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: precioController,
+                      decoration: InputDecoration(labelText: 'Precio'),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Ingresa un precio';
+                        }
+                        final precio = double.tryParse(value);
+                        if (precio == null || precio <= 0) {
+                          return 'Debe ingresar un numero mayor a cero';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: () async {
+                        DateTime? fecha = await showDatePicker(
+                          context: context,
+                          initialDate: fechaSeleccionada ?? DateTime.now(),
+                          firstDate: DateTime(2023),
+                          lastDate: DateTime(2100),
+                        );
+                        if (fecha != null) {
+                          setState(() {
+                            fechaSeleccionada = fecha;
+                          });
+                        }
+                      },
+                      child: Text(
+                        fechaSeleccionada == null
+                            ? 'Seleccionar fecha'
+                            : 'Fecha: ${fechaSeleccionada!.day}/${fechaSeleccionada!.month}/${fechaSeleccionada!.year}',
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        TimeOfDay? hora = await showTimePicker(
+                          context: context,
+                          initialTime: horaSeleccionada ?? TimeOfDay.now(),
+                        );
+                        if (hora != null) {
+                          setState(() {
+                            horaSeleccionada = hora;
+                          });
+                        }
+                      },
+                      child: Text(
+                        horaSeleccionada == null
+                            ? 'Seleccionar hora'
+                            : 'Hora: ${horaSeleccionada!.format(context)}',
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             actions: [
-              // boton descartar anadi este boton aca
               ElevatedButton(
                 onPressed: () {
-                  // descartar
                   nombreController.clear();
                   motivoController.clear();
                   salaController.clear();
@@ -141,43 +174,25 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                   precioController.clear();
                   fechaSeleccionada = null;
                   horaSeleccionada = null;
-
-                  // cerra el dialofo
                   Navigator.pop(context);
                 },
                 child: const Text('Descartar'),
               ),
-
               ElevatedButton(
                 onPressed: () async {
-                  DateTime fechaHora = DateTime(
-                    fechaSeleccionada?.year ?? DateTime.now().year,
-                    fechaSeleccionada?.month ?? DateTime.now().month,
-                    fechaSeleccionada?.day ?? DateTime.now().day,
-                    horaSeleccionada?.hour ?? 0,
-                    horaSeleccionada?.minute ?? 0,
-                  );
+                  if (_formKey.currentState!.validate()) {
+                    final sala = salaController.text.trim();
 
-                  // Verificar si ya existe una cita en la misma fecha y hora
-                  bool existe = await firestoreService.existeCitaEnFechaHora(
-                    fechaHora,
-                  );
-
-                  // Si es una nueva cita y ya existe, mostrar error
-                  if (existe && docID == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Ya existe una cita en esa fecha y hora.',
-                        ),
-                      ),
+                    // Combina fecha y hora seleccionada en un solo DateTime
+                    DateTime fechaHora = DateTime(
+                      fechaSeleccionada?.year ?? DateTime.now().year,
+                      fechaSeleccionada?.month ?? DateTime.now().month,
+                      fechaSeleccionada?.day ?? DateTime.now().day,
+                      horaSeleccionada?.hour ?? 0,
+                      horaSeleccionada?.minute ?? 0,
                     );
-                    return;
-                  }
 
-                  // Si es una edición, verificar si el nuevo horario no choca con otra cita (distinta)
-                  if (existe && docID != null) {
-                    // Traer todas las citas con esa fechaHora
+                    // Busca si ya existe una cita en la misma fecha y hora
                     QuerySnapshot duplicados =
                         await FirebaseFirestore.instance
                             .collection('citas')
@@ -187,57 +202,83 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                             )
                             .get();
 
-                    // Si hay otra cita con esa fecha y NO es esta misma que estamos editando
-                    bool hayConflicto = duplicados.docs.any(
-                      (doc) => doc.id != docID,
-                    );
+                    // Evalúa si hay conflicto con la sala (misma fechaHora y misma sala)
+                    bool hayConflicto = duplicados.docs.any((doc) {
+                      final datos = doc.data() as Map<String, dynamic>;
+                      final salaDoc = datos['sala'];
+                      final mismoID =
+                          (docID != null && doc.id == docID); // edición propia
+                      return salaDoc == sala && !mismoID;
+                    });
+
+                    // Si hay conflicto de sala, se bloquea
                     if (hayConflicto) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
+                        const SnackBar(
                           content: Text(
-                            'Otra cita ya está agendada en esa fecha y hora.',
+                            'Ya hay una cita en esa sala a esa fecha y hora.',
+                            style: TextStyle(color: Colors.white),
                           ),
+                          backgroundColor: Colors.redAccent,
                         ),
                       );
                       return;
                     }
+
+                    // Si NO hay conflicto, se puede guardar o actualizar la cita
+                    final nuevaCita = {
+                      'nombre': nombreController.text.trim(),
+                      'motivo': motivoController.text.trim(),
+                      'telefono': telefonoController.text.trim(),
+                      'precio':
+                          double.tryParse(precioController.text.trim()) ?? 0,
+                      'sala': sala,
+                      'fechaHora': Timestamp.fromDate(fechaHora),
+                    };
+
+                    // Crear nueva cita
+                    if (docID == null) {
+                      await FirebaseFirestore.instance
+                          .collection('citas')
+                          .add(nuevaCita);
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('¡Cita creada exitosamente!'),
+                          backgroundColor: Colors.green,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                    // O actualizar cita existente
+                    else {
+                      await FirebaseFirestore.instance
+                          .collection('citas')
+                          .doc(docID)
+                          .update(nuevaCita);
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('¡Cita actualizada exitosamente!'),
+                          backgroundColor: Colors.blue,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+
+                    // Limpia y cierra el formulario
+                    nombreController.clear();
+                    motivoController.clear();
+                    salaController.clear();
+                    telefonoController.clear();
+                    precioController.clear();
+                    fechaSeleccionada = null;
+                    horaSeleccionada = null;
+
+                    Navigator.pop(context);
                   }
-
-                  // Guardar o actualizar cita
-                  if (docID == null) {
-                    await firestoreService.agregarCita(
-                      nombre: nombreController.text,
-                      motivo: motivoController.text,
-                      sala: salaController.text,
-                      telefono: telefonoController.text,
-                      precio: double.tryParse(precioController.text) ?? 0,
-                      fechaHora: fechaHora,
-                    );
-                  } else {
-                    await firestoreService.actualizarCita(
-                      docID,
-                      nombreController.text,
-                      motivoController.text,
-                      salaController.text,
-                      telefonoController.text,
-                      double.tryParse(precioController.text) ?? 0,
-                      fechaHora,
-                    );
-                  }
-
-                  // Limpiar campos
-                  nombreController.clear();
-                  motivoController.clear();
-                  salaController.clear();
-                  telefonoController.clear();
-                  precioController.clear();
-                  fechaSeleccionada = null;
-                  horaSeleccionada = null;
-
-                  Navigator.pop(context);
                 },
-
-                child: Text(docID == null ? 'Guardar' : 'Actualizar'),
+                child: Text(docID == null ? 'Guardar Cita' : 'Actualizar Cita'),
               ),
             ],
           ),
@@ -252,7 +293,6 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
-            //icono nuevo de la libreria Icon para informacion
             onPressed: () {
               showDialog(
                 context: context,
@@ -282,21 +322,16 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
       body: StreamBuilder<QuerySnapshot>(
         stream: firestoreService.obtenerFlujoDeCitas(),
         builder: (context, snapshot) {
-          //si tenemos datos, obtenemos todo
           if (snapshot.hasData) {
             List listaCitas = snapshot.data!.docs;
-
-            //mostrar una lista
             return ListView.builder(
               itemCount: listaCitas.length,
               itemBuilder: (context, index) {
-                //obtener cada documento individual
                 DocumentSnapshot document = listaCitas[index];
                 String docID = document.id;
-
-                //obtener nota de cada documento
                 Map<String, dynamic> data =
                     document.data() as Map<String, dynamic>;
+
                 String nombre = data['nombre']?.toString() ?? 'Sin nombre';
                 String motivo = data['motivo']?.toString() ?? 'Sin motivo';
                 String sala = data['sala']?.toString() ?? 'Sin sala';
@@ -306,7 +341,6 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                     (data['precio'] != null)
                         ? double.tryParse(data['precio'].toString()) ?? 0.0
                         : 0.0;
-
                 Timestamp ts = data['fechaHora'];
                 DateTime fechaHora = ts.toDate();
 
@@ -315,7 +349,6 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                 String horaStr =
                     '${fechaHora.hour.toString().padLeft(2, '0')}:${fechaHora.minute.toString().padLeft(2, '0')}';
 
-                //mostrar como un elemento de lista
                 return ListTile(
                   title: Text(nombre),
                   subtitle: Column(
@@ -331,21 +364,18 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      //boton editar
                       IconButton(
                         icon: Icon(Icons.edit),
                         onPressed:
                             () => abrirCajaCita(docID: docID, datos: data),
                       ),
-
-                      //boton eliminar
                       IconButton(
                         onPressed: () {
                           showDialog(
                             context: context,
                             builder: (BuildContext context) {
                               return AlertDialog(
-                                title: const Text('¿Elimiacion de cita?'),
+                                title: const Text('¿Elimiación de cita?'),
                                 content: const Text(
                                   '¿Estás seguro de que deseas eliminar dicha cita?',
                                 ),
@@ -375,9 +405,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                 );
               },
             );
-          }
-          //si no hay datos, no devuelvas nada
-          else {
+          } else {
             return const Text('No notes...');
           }
         },
