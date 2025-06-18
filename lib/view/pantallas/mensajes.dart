@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 class PantallaMensajes extends StatefulWidget {
   const PantallaMensajes({super.key});
@@ -12,6 +14,7 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
   final TextEditingController _mensajeController = TextEditingController();
   String? _mensajeSeleccionado;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final picker = ImagePicker();
 
   final List<String> _mensajesPreestablecidos = [
     "Te saludamos desde centro médico Dayenú.",
@@ -32,6 +35,7 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
     }
   }
 
+  // ✅ Diálogo de información
   void _mostrarInfoDialog() {
     showDialog(
       context: context,
@@ -39,7 +43,7 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
           (_) => AlertDialog(
             title: const Text("Información"),
             content: const Text(
-              "Aquí puedes seleccionar un mensaje rápido o personalizar uno para enviar por WhatsApp u otra aplicacion.",
+              "Aquí puedes seleccionar un mensaje rápido, escribir uno personalizado o escanear texto desde una imagen para enviarlo por WhatsApp.",
             ),
             actions: [
               TextButton(
@@ -51,6 +55,73 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
     );
   }
 
+  Future<void> _escanearTexto({required ImageSource source}) async {
+    final XFile? imagen = await picker.pickImage(source: source);
+    if (imagen == null) return;
+
+    final inputImage = InputImage.fromFilePath(imagen.path);
+    final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+    final recognizedText = await textRecognizer.processImage(inputImage);
+
+    final buffer = StringBuffer();
+    for (final block in recognizedText.blocks) {
+      buffer.writeln(block.text);
+    }
+
+    await textRecognizer.close();
+
+    setState(() {
+      _mensajeController.text = buffer.toString();
+    });
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Texto escaneado insertado.")));
+  }
+
+  void _mostrarOpcionesEscaneo() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder:
+          (_) => Padding(
+            padding: const EdgeInsets.all(20),
+            child: Wrap(
+              runSpacing: 12,
+              children: [
+                const Center(
+                  child: Text(
+                    "Selecciona la fuente del documento",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.camera_alt),
+                  title: const Text("Escanear con cámara"),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _escanearTexto(source: ImageSource.camera);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text("Seleccionar desde galería"),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _escanearTexto(source: ImageSource.gallery);
+                  },
+                ),
+              ],
+            ),
+          ),
+    );
+  }
+
+  // ============================
+  // UI PRINCIPAL
+  // ============================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,14 +138,11 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
+            const Padding(
+              padding: EdgeInsets.all(16),
               child: Text(
                 "Mensajes rápidos",
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
             ),
             Expanded(
@@ -83,9 +151,9 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       "Seleccione un mensaje predefinido para enviar:",
-                      style: const TextStyle(fontSize: 16),
+                      style: TextStyle(fontSize: 16),
                     ),
                     const SizedBox(height: 12),
                     ListView.separated(
@@ -101,10 +169,7 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: ListTile(
-                            title: Text(
-                              mensaje,
-                              style: const TextStyle(fontSize: 16),
-                            ),
+                            title: Text(mensaje),
                             trailing: const Icon(
                               Icons.arrow_forward_ios,
                               size: 18,
@@ -130,33 +195,31 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
                 color: Colors.white,
                 border: Border(top: BorderSide(color: Colors.grey[300]!)),
               ),
-              child: Column(
-                children: [
-                  Form(
-                    key: _formKey,
-                    child: Column(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _mensajeController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: "Mensaje personalizado",
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Escribe o escanea un mensaje para enviarlo';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 18),
+                    Row(
                       children: [
-                        TextFormField(
-                          controller: _mensajeController,
-                          maxLines: 3,
-                          decoration: const InputDecoration(
-                            labelText: "Mensaje personalizado",
-                            //escribe en la parte superior del formulario similar al label de html
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Escribe un mensaje para enviarlo';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 18),
-                        SizedBox(
-                          width: double.infinity,
+                        Expanded(
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
+                              backgroundColor: Colors.green,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -170,15 +233,36 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
                             },
                             icon: const Icon(Icons.send, color: Colors.white),
                             label: const Text(
-                              "Enviar por WhatsApp",
+                              "Enviar WhatsApp",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blueAccent,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: _mostrarOpcionesEscaneo,
+                            icon: const Icon(
+                              Icons.document_scanner,
+                              color: Colors.white,
+                            ),
+                            label: const Text(
+                              "Escanear",
                               style: TextStyle(color: Colors.white),
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
