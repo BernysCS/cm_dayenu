@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	<!-- Permisos para camaras y galeria -->
+	<key>NSCameraUsageDescription</key>
+	<string>Se necesita acceso a la cámara para escanear documentos</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Se necesita acceso a la galería para seleccionar imágenes</string>
 </dict>
 </plist>
