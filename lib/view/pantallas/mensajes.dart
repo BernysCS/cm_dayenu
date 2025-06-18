@@ -11,6 +11,7 @@ class PantallaMensajes extends StatefulWidget {
 class _PantallaMensajesState extends State<PantallaMensajes> {
   final TextEditingController _mensajeController = TextEditingController();
   String? _mensajeSeleccionado;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final List<String> _mensajesPreestablecidos = [
     "Te saludamos desde centro médico Dayenú.",
@@ -131,36 +132,50 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
               ),
               child: Column(
                 children: [
-                  TextField(
-                    controller: _mensajeController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: "Mensaje personalizado",
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _mensajeController,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            labelText: "Mensaje personalizado",
+                            //escribe en la parte superior del formulario similar al label de html
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Escribe un mensaje para enviarlo';
+                            }
+                            return null;
+                          },
                         ),
-                      ),
-                      onPressed: () {
-                        final mensaje = _mensajeController.text.trim();
-                        if (mensaje.isNotEmpty) {
-                          _abrirWhatsApp(mensaje);
-                        }
-                      },
-                      icon: const Icon(Icons.send, color: Colors.white),
-                      label: const Text(
-                        "Enviar por WhatsApp",
-                        style: TextStyle(color: Colors.white),
-                      ),
+                        const SizedBox(height: 18),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () {
+                              if (_formKey.currentState!.validate()) {
+                                final mensaje = _mensajeController.text.trim();
+                                _abrirWhatsApp(mensaje);
+                              }
+                            },
+                            icon: const Icon(Icons.send, color: Colors.white),
+                            label: const Text(
+                              "Enviar por WhatsApp",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
