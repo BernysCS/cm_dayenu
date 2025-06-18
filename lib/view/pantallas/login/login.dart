@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:cm_dayenu/view/navegacion.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PantallaLogin extends StatefulWidget {
   const PantallaLogin({super.key});
@@ -27,12 +28,13 @@ class _PantallaLoginState extends State<PantallaLogin> {
     }
 
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('usuarios')
-          .where('usuario', isEqualTo: usuario)
-          .where('contrasena', isEqualTo: contrasena)
-          .limit(1)
-          .get();
+      final snapshot =
+          await FirebaseFirestore.instance
+              .collection('usuarios')
+              .where('usuario', isEqualTo: usuario)
+              .where('contrasena', isEqualTo: contrasena)
+              .limit(1)
+              .get();
 
       if (snapshot.docs.isEmpty) {
         setState(() {
@@ -41,6 +43,11 @@ class _PantallaLoginState extends State<PantallaLogin> {
       } else {
         final userData = snapshot.docs.first.data();
         final tipoUsuario = userData['rol'];
+
+        // GUARDAR SESIÓN
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('logueado', true);
+        await prefs.setString('rol', tipoUsuario);
 
         Navigator.pushReplacement(
           context,
@@ -81,10 +88,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
               child: const Text('Ingresar'),
             ),
             const SizedBox(height: 20),
-            Text(
-              _error,
-              style: const TextStyle(color: Colors.red),
-            ),
+            Text(_error, style: const TextStyle(color: Colors.red)),
           ],
         ),
       ),

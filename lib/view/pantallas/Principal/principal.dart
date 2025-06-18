@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cm_dayenu/controller/firestore.dart';
+import 'package:cm_dayenu/view/pantallas/login/login.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PantallaPrincipal extends StatefulWidget {
   const PantallaPrincipal({super.key});
@@ -251,8 +253,22 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
         title: Text('Dayenú'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.clear(); // Limpia la sesión
+
+              // Volver a pantalla de login
+              if (!mounted) return;
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const PantallaLogin()),
+                (route) => false,
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.info_outline),
-            //icono nuevo de la libreria Icon para informacion
             onPressed: () {
               showDialog(
                 context: context,
@@ -260,7 +276,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                   return AlertDialog(
                     title: const Text('Información'),
                     content: const Text(
-                      'Pagina principal de creacion de citas.',
+                      'Página principal de creación de citas.',
                     ),
                     actions: [
                       ElevatedButton(
