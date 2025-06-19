@@ -9,10 +9,12 @@ class PantallaReportes extends StatefulWidget {
 }
 
 class _PantallaReportesState extends State<PantallaReportes> {
+  //guarda el mes y el año que selecciona el usuario
   int _mesSeleccionado = DateTime.now().month;
   int _anioSeleccionado = DateTime.now().year;
 
   // Rango fecha para filtro de citas
+  //Calcula la fecha de inicio y fin del mes seleccionado para filtrar las citas de ese mes.
   DateTime get _inicioMes => DateTime(_anioSeleccionado, _mesSeleccionado, 1);
   DateTime get _finMes => DateTime(
     _anioSeleccionado,
@@ -135,6 +137,7 @@ class _PantallaReportesState extends State<PantallaReportes> {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
+                    //muestra los datos de las citas
                     StreamBuilder<QuerySnapshot>(
                       stream: _obtenerCitasPorMes(),
                       builder: (context, snapshotCitas) {

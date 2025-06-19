@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cm_dayenu/controller/firestore.dart';
+import 'package:cm_dayenu/view/pantallas/login/login.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PantallaPrincipal extends StatefulWidget {
   const PantallaPrincipal({super.key});
@@ -234,6 +236,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                           double.tryParse(precioController.text.trim()) ?? 0,
                       'sala': sala,
                       'fechaHora': Timestamp.fromDate(fechaHora),
+                      'timestamp': FieldValue.serverTimestamp(),
                     };
 
                     // Crear nueva cita
@@ -292,6 +295,21 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
         title: Text('Dayenú'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.clear(); // Limpia la sesión
+
+              // Volver a pantalla de login
+              if (!mounted) return;
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const PantallaLogin()),
+                (route) => false,
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.info_outline),
             onPressed: () {
               showDialog(
@@ -300,7 +318,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                   return AlertDialog(
                     title: const Text('Información'),
                     content: const Text(
-                      'Pagina principal de creacion de citas.',
+                      'Página principal de creación de citas.',
                     ),
                     actions: [
                       ElevatedButton(
@@ -348,7 +366,6 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                     '${fechaHora.day}/${fechaHora.month}/${fechaHora.year}';
                 String horaStr =
                     '${fechaHora.hour.toString().padLeft(2, '0')}:${fechaHora.minute.toString().padLeft(2, '0')}';
-
                 return ListTile(
                   title: Text(nombre),
                   subtitle: Column(

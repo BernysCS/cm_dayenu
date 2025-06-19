@@ -30,7 +30,7 @@ class _NavegacionState extends State<Navegacion> {
       items = const [
         BottomNavigationBarItem(
           icon: Icon(Icons.calendar_today),
-          label: 'Principal',
+          label: 'Citas',
         ),
         BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Mensajes'),
         BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Usuarios'),
@@ -44,7 +44,7 @@ class _NavegacionState extends State<Navegacion> {
       items = const [
         BottomNavigationBarItem(
           icon: Icon(Icons.calendar_today),
-          label: 'Principal',
+          label: 'Citas',
         ),
         BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Mensajes'),
       ];
@@ -57,7 +57,7 @@ class _NavegacionState extends State<Navegacion> {
       items = const [
         BottomNavigationBarItem(
           icon: Icon(Icons.calendar_today),
-          label: 'Principal',
+          label: 'Citas',
         ),
         BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Mensajes'),
         BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Usuarios'),

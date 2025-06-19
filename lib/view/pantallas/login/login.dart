@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:cm_dayenu/view/navegacion.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PantallaLogin extends StatefulWidget {
   const PantallaLogin({super.key});
@@ -42,6 +43,11 @@ class _PantallaLoginState extends State<PantallaLogin> {
       } else {
         final userData = snapshot.docs.first.data();
         final tipoUsuario = userData['rol'];
+
+        // GUARDAR SESIÓN
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('logueado', true);
+        await prefs.setString('rol', tipoUsuario);
 
         Navigator.pushReplacement(
           context,
