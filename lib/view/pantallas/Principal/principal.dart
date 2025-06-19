@@ -1,8 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cm_dayenu/controller/firestore.dart';
+import 'package:cm_dayenu/main.dart';
 import 'package:cm_dayenu/view/pantallas/login/login.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timezone/timezone.dart' as tz;
+
 
 class PantallaPrincipal extends StatefulWidget {
   const PantallaPrincipal({super.key});
@@ -23,6 +27,36 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
 
   DateTime? fechaSeleccionada;
   TimeOfDay? horaSeleccionada;
+
+void programarNotificacion(
+  DateTime fechaHora,
+  String nombre,
+  String id,
+  String horaStr,
+) {
+  final fechaNotificacion = fechaHora.subtract(const Duration(minutes: 10));
+
+  if (fechaNotificacion.isAfter(DateTime.now())) {
+    flutterLocalNotificationsPlugin.zonedSchedule(
+      id.hashCode,
+      'Cita próxima',
+      'Tu cita con $nombre comenzará a las $horaStr',
+      tz.TZDateTime.from(fechaNotificacion, tz.local),
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'canal_citas',
+          'Citas',
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.dateAndTime,
+    );
+  }
+}
+
 
   void abrirCajaCita({String? docID, Map<String, dynamic>? datos}) {
     if (datos != null) {
@@ -364,8 +398,12 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
 
                 String fechaStr =
                     '${fechaHora.day}/${fechaHora.month}/${fechaHora.year}';
+
                 String horaStr =
                     '${fechaHora.hour.toString().padLeft(2, '0')}:${fechaHora.minute.toString().padLeft(2, '0')}';
+
+                programarNotificacion(fechaHora, nombre, docID, horaStr);
+
                 return ListTile(
                   title: Text(nombre),
                   subtitle: Column(
