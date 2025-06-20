@@ -1,3 +1,4 @@
 {
-  "java.configuration.updateBuildConfiguration": "interactive"
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "cmake.sourceDirectory": "C:/Proyectos_programacion_movil/cm_dayenu/linux"
 }

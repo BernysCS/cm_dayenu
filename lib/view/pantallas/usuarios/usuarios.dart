@@ -27,156 +27,175 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
 
     showDialog(
       context: context,
-      builder: (_) {
-        return StatefulBuilder(
-          builder:
-              (context, setStateDialog) => AlertDialog(
-                title: Text(
-                  usuarioExistente == null
-                      ? 'Agregar Usuario'
-                      : 'Editar Usuario',
-                ),
-                content: SingleChildScrollView(
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextFormField(
-                          controller: _usuarioController,
-                          decoration: const InputDecoration(
-                            labelText: 'Usuario',
-                          ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Por favor ingresa un nombre de usuario';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _contrasenaController,
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Contraseña',
-                          ),
-                          validator: (value) {
-                            if (value == null || value.trim().length < 6) {
-                              return 'La contraseña debe tener al menos 6 caracteres';
-                            }
-                            return null;
-                          },
-                        ),
-                        TextFormField(
-                          controller: _confirmarContrasenaController,
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Confirmacion de contraseña',
-                          ),
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Por favor confirma la contraseña';
-                            }
-                            if (value.trim() !=
-                                _contrasenaController.text.trim()) {
-                              return 'Las contraseñas no coinciden';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        DropdownButtonFormField<String>(
-                          value: _rolSeleccionado,
-                          decoration: const InputDecoration(labelText: 'Rol'),
-                          onChanged: (String? nuevoValor) {
-                            if (nuevoValor != null) {
-                              setStateDialog(() {
-                                _rolSeleccionado = nuevoValor;
-                              });
-                            }
-                          },
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'admin',
-                              child: Text('Admin'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'doctor',
-                              child: Text('Doctor'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'recepcionista',
-                              child: Text('Recepcionista'),
-                            ),
-                          ],
-                        ),
-                      ],
+      builder: (_) => StatefulBuilder(
+        builder: (context, setStateDialog) => AlertDialog(
+          title: Center(
+            child: Text(
+              usuarioExistente == null ? 'Agregar Usuario' : 'Editar Usuario',
+              style: const TextStyle(
+                color: Color(0xFF009688),
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: _usuarioController,
+                    decoration: InputDecoration(
+                      labelText: 'Usuario',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Por favor ingresa un nombre de usuario';
+                      }
+                      return null;
+                    },
                   ),
-                ),
-                actions: [
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancelar'),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _contrasenaController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: 'Contraseña',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().length < 6) {
+                        return 'La contraseña debe tener al menos 6 caracteres';
+                      }
+                      return null;
+                    },
                   ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      if (_formKey.currentState!.validate()) {
-                        final usuario = _usuarioController.text.trim();
-                        final contrasena = _contrasenaController.text.trim();
-
-                        if (usuarioExistente == null) {
-                          await FirebaseFirestore.instance
-                              .collection('usuarios')
-                              .add({
-                                'usuario': usuario,
-                                'contrasena': contrasena,
-                                'rol': _rolSeleccionado,
-                              });
-                        } else {
-                          await FirebaseFirestore.instance
-                              .collection('usuarios')
-                              .doc(usuarioExistente.id)
-                              .update({
-                                'usuario': usuario,
-                                'contrasena': contrasena,
-                                'rol': _rolSeleccionado,
-                              });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            /*tipo de mensaje visto en clase donde dentro del contexto
-                            mostrara un barra snack cercana al teclado**/
-                            SnackBar(
-                              content: const Text(
-                                '¡Usuario creado exitosamente!',
-                              ),
-                              backgroundColor:
-                                  Colors //Lissy agregue estilo de color que contrste con su diseno!!
-                                      .lightGreen,
-                              // agregue un snackbar para creacion exitosa
-                              duration: const Duration(
-                                seconds: 2,
-                              ), // Se quita despues de 2''
-                              behavior:
-                                  //define cómo y dónde aparece visualmente el SnackBar en pantalla.
-                                  SnackBarBehavior
-                                      .floating, // Flotante (opcional, se ve más moderno)
-                              shape: RoundedRectangleBorder(
-                                // Borde redondeado (opcional)
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          );
-                        }
-                        Navigator.pop(context);
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _confirmarContrasenaController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: 'Confirmación de contraseña',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Por favor confirma la contraseña';
+                      }
+                      if (value.trim() != _contrasenaController.text.trim()) {
+                        return 'Las contraseñas no coinciden';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: _rolSeleccionado,
+                    decoration: InputDecoration(
+                      labelText: 'Rol',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onChanged: (String? nuevoValor) {
+                      if (nuevoValor != null) {
+                        setStateDialog(() {
+                          _rolSeleccionado = nuevoValor;
+                        });
                       }
                     },
-                    child: const Text('Guardar'),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'admin',
+                        child: Text('Admin'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'doctor',
+                        child: Text('Doctor'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'recepcionista',
+                        child: Text('Recepcionista'),
+                      ),
+                    ],
                   ),
                 ],
               ),
-        );
-      },
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF1F1F1),
+                foregroundColor: Colors.black87,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF009688),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () async {
+                if (_formKey.currentState!.validate()) {
+                  final usuario = _usuarioController.text.trim();
+                  final contrasena = _contrasenaController.text.trim();
+
+                  if (usuarioExistente == null) {
+                    await FirebaseFirestore.instance
+                        .collection('usuarios')
+                        .add({
+                      'usuario': usuario,
+                      'contrasena': contrasena,
+                      'rol': _rolSeleccionado,
+                    });
+                  } else {
+                    await FirebaseFirestore.instance
+                        .collection('usuarios')
+                        .doc(usuarioExistente.id)
+                        .update({
+                      'usuario': usuario,
+                      'contrasena': contrasena,
+                      'rol': _rolSeleccionado,
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('¡Usuario actualizado exitosamente!'),
+                        backgroundColor: Colors.lightGreen,
+                        duration: const Duration(seconds: 2),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    );
+                  }
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -194,7 +213,6 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
           actions: [
             IconButton(
               icon: const Icon(Icons.info_outline),
-              //icono nuevo de la libreria Icon para informacion
               onPressed: () {
                 showDialog(
                   context: context,
@@ -202,12 +220,25 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
                     return AlertDialog(
                       title: const Text('Información'),
                       content: const Text(
-                        'Pagina de informacion sobre usuarios: personal y paciente.',
+                        'Página de información sobre usuarios: personal y paciente.',
                       ),
                       actions: [
                         ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:  Color(0xFF009688),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
+                          ),
                           onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('Cerrar'),
+                          child: const Text(
+                            'Cerrar',
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
                       ],
                     );
@@ -217,98 +248,94 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
             ),
           ],
           bottom: const TabBar(
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white,
             tabs: [Tab(text: 'Personal'), Tab(text: 'Pacientes')],
           ),
         ),
         body: TabBarView(
           children: [
-            // Lista de usuarios (Personal)
             StreamBuilder<QuerySnapshot>(
-              stream:
-                  FirebaseFirestore.instance.collection('usuarios').snapshots(),
+              stream: FirebaseFirestore.instance.collection('usuarios').snapshots(),
               builder: (context, snapshot) {
-                if (snapshot.hasError)
-                  return const Text('Error al cargar usuarios');
+                if (snapshot.hasError) {
+                  return const Center(child: Text('Error al cargar usuarios'));
+                }
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
+
                 final usuarios = snapshot.data!.docs;
 
                 return Stack(
                   children: [
                     ListView.builder(
-                      padding: const EdgeInsets.only(
-                        bottom: 80,
-                      ), // espacio para el botón
+                      padding: const EdgeInsets.only(bottom: 80),
                       itemCount: usuarios.length,
                       itemBuilder: (context, index) {
                         final usuario = usuarios[index];
-                        return ListTile(
-                          title: Text(usuario['usuario']),
-                          subtitle: Text('Rol: ${usuario['rol']}'),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit),
-                                onPressed:
-                                    () => _mostrarFormulario(
-                                      usuarioExistente: usuario,
-                                    ),
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                          child: Card(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 4,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.person, color: Color(0xFF009688)),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        usuario['usuario'],
+                                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.verified_user, color: Color(0xFF009688)),
+                                      const SizedBox(width: 8),
+                                      Text('Rol: ${usuario['rol']}'),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.edit, color: Colors.orange),
+                                        onPressed: () => _mostrarFormulario(usuarioExistente: usuario),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete, color: Colors.redAccent),
+                                        onPressed: () async {
+                                          await _eliminarUsuario(usuario.id);
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.delete),
-                                onPressed: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        title: const Text('¿Eliminar usuario?'),
-                                        content: const Text(
-                                          '¿Estás seguro de que deseas eliminar este usuario? Una vez elimando no puede revertir la accion',
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.of(
-                                                context,
-                                              ).pop(); // Cierra el diálogo
-                                            },
-                                            child: const Text('Cancelar'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              _eliminarUsuario(
-                                                usuario.id,
-                                              ); // Elimina el usuario
-                                              Navigator.of(
-                                                context,
-                                              ).pop(); // Cierra el diálogo
-                                            },
-                                            child: const Text('Eliminar'),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
-                            ],
+                            ),
                           ),
                         );
                       },
                     ),
-                    // Botón de icono centrado en la parte inferior
                     Positioned(
-                      bottom: 20,
+                      bottom: 16,
                       left: 0,
                       right: 0,
                       child: Center(
-                        child: IconButton(
-                          iconSize: 56,
-                          icon: const Icon(Icons.add_circle),
+                        child: FloatingActionButton(
+                          backgroundColor: const Color(0xFF009688),
                           onPressed: () => _mostrarFormulario(),
-                          tooltip: 'Agregar Usuario',
+                          child: const Icon(Icons.add, color: Colors.white),
                         ),
                       ),
                     ),
@@ -316,9 +343,7 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
                 );
               },
             ),
-
-            // Segunda pestaña (Pacientes)
-            PantallaPacientes(),
+            const PantallaPacientes(),
           ],
         ),
       ),
