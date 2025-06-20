@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:url_launcher/url_launcher.dart';
 
 // pendiente de que funcione la notificación dependiendo de la cita pero la notificación que esta en el appbar si funciona
 
@@ -28,6 +29,11 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
 
   DateTime? fechaSeleccionada;
   TimeOfDay? horaSeleccionada;
+  String? estadoSeleccionado = 'Programado';
+
+  bool _mostrarBusqueda = false;
+  final TextEditingController _busquedaController = TextEditingController();
+  String _textoBusqueda = '';
 
   void programarNotificacion(
     DateTime fechaHora,
@@ -86,6 +92,8 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
           minute: fechaSeleccionada!.minute,
         );
       }
+
+      estadoSeleccionado = datos['estado'] ?? 'Programado';
     } else {
       nombreController.clear();
       motivoController.clear();
@@ -94,6 +102,8 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
       precioController.clear();
       fechaSeleccionada = null;
       horaSeleccionada = null;
+
+      estadoSeleccionado = 'Programado';
     }
 
     showDialog(
@@ -170,6 +180,32 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                         return null;
                       },
                     ),
+
+                    DropdownButtonFormField<String>(
+                      value: estadoSeleccionado,
+                      decoration: const InputDecoration(labelText: 'Estado'),
+                      items:
+                          ['Programado', 'Completado', 'Cancelado'].map((
+                            String value,
+                          ) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                      onChanged: (newValue) {
+                        setState(() {
+                          estadoSeleccionado = newValue;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Selecciona un estado';
+                        }
+                        return null;
+                      },
+                    ),
+
                     const SizedBox(height: 10),
                     ElevatedButton(
                       onPressed: () async {
@@ -284,6 +320,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                       'sala': sala,
                       'fechaHora': Timestamp.fromDate(fechaHora),
                       'timestamp': FieldValue.serverTimestamp(),
+                      'estado': estadoSeleccionado ?? 'Programado',
                     };
 
                     // Crear nueva cita
@@ -357,12 +394,164 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
     );
   }
 
+  void abrirGestionDeExtras(String docID, Map<String, dynamic> data) {
+    List<dynamic> extras = List.from(data['extras'] ?? []);
+
+    final _formKey = GlobalKey<FormState>();
+    final descripcionController = TextEditingController();
+    final montoController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder:
+          (_) => StatefulBuilder(
+            builder:
+                (context, setState) => AlertDialog(
+                  title: const Text('Servicios extra'),
+                  content: SingleChildScrollView(
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            height: 150,
+                            child: ListView.separated(
+                              shrinkWrap: true,
+                              itemCount: extras.length,
+                              separatorBuilder: (_, __) => const Divider(),
+                              itemBuilder: (context, index) {
+                                Map<String, dynamic> extra = extras[index];
+                                return ListTile(
+                                  title: Text(extra['descripcion']),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text('\$${extra['monto']}'),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.delete,
+                                          color: Colors.red,
+                                        ),
+                                        onPressed: () async {
+                                          extras.removeAt(index);
+                                          await FirebaseFirestore.instance
+                                              .collection('citas')
+                                              .doc(docID)
+                                              .update({'extras': extras});
+                                          setState(() {});
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const Divider(),
+                          TextFormField(
+                            controller: descripcionController,
+                            decoration: const InputDecoration(
+                              labelText: 'Descripción',
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Ingresa una descripción';
+                              }
+                              return null;
+                            },
+                          ),
+                          TextFormField(
+                            controller: montoController,
+                            decoration: const InputDecoration(
+                              labelText: 'Monto',
+                            ),
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Ingresa un monto';
+                              }
+                              final monto = double.tryParse(value.trim());
+                              if (monto == null || monto <= 0) {
+                                return 'Monto inválido';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cerrar'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        if (_formKey.currentState!.validate()) {
+                          String desc = descripcionController.text.trim();
+                          double monto = double.parse(
+                            montoController.text.trim(),
+                          );
+
+                          extras.add({'descripcion': desc, 'monto': monto});
+                          await FirebaseFirestore.instance
+                              .collection('citas')
+                              .doc(docID)
+                              .update({'extras': extras});
+
+                          descripcionController.clear();
+                          montoController.clear();
+                          setState(() {});
+                        }
+                      },
+                      child: const Text('Agregar servicio extra'),
+                    ),
+                  ],
+                ),
+          ),
+    );
+  }
+
+  void enviarWhatsApp(
+    String telefono,
+    String nombre,
+    DateTime fechaCita,
+  ) async {
+    final fechaStr = '${fechaCita.day}/${fechaCita.month}/${fechaCita.year}';
+    final mensaje =
+        'Hola $nombre, somos del Centro Médico Dayenú 😊. Solo queremos recordarte que tienes una cita pendiente el $fechaStr. ¡No faltes, te esperamos con gusto!';
+
+    final telefonoFormateado = '504$telefono';
+
+    final url = Uri.parse(
+      'https://wa.me/$telefonoFormateado?text=${Uri.encodeComponent(mensaje)}',
+    );
+
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      print('No se pudo abrir WhatsApp');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Dayenú'),
         actions: [
+          if (!_mostrarBusqueda)
+            IconButton(
+              icon: Icon(Icons.search),
+              onPressed: () {
+                setState(() {
+                  _mostrarBusqueda = true;
+                });
+              },
+            ),
+
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
@@ -407,96 +596,205 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
         onPressed: () => abrirCajaCita(),
         child: Icon(Icons.add),
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: firestoreService.obtenerFlujoDeCitas(),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            List listaCitas = snapshot.data!.docs;
-            return ListView.builder(
-              itemCount: listaCitas.length,
-              itemBuilder: (context, index) {
-                DocumentSnapshot document = listaCitas[index];
-                String docID = document.id;
-                Map<String, dynamic> data =
-                    document.data() as Map<String, dynamic>;
 
-                String nombre = data['nombre']?.toString() ?? 'Sin nombre';
-                String motivo = data['motivo']?.toString() ?? 'Sin motivo';
-                String sala = data['sala']?.toString() ?? 'Sin sala';
-                String telefono =
-                    data['telefono']?.toString() ?? 'Sin teléfono';
-                double precio =
-                    (data['precio'] != null)
-                        ? double.tryParse(data['precio'].toString()) ?? 0.0
-                        : 0.0;
-                Timestamp ts = data['fechaHora'];
-                DateTime fechaHora = ts.toDate();
-
-                String fechaStr =
-                    '${fechaHora.day}/${fechaHora.month}/${fechaHora.year}';
-
-                String horaStr =
-                    '${fechaHora.hour.toString().padLeft(2, '0')}:${fechaHora.minute.toString().padLeft(2, '0')}';
-                return ListTile(
-                  title: Text(nombre),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Fecha: $fechaStr  Hora: $horaStr'),
-                      Text('Motivo: $motivo'),
-                      Text('Sala: $sala'),
-                      Text('Teléfono: $telefono'),
-                      Text('Precio: \$${precio.toStringAsFixed(2)}'),
-                    ],
+      // busqueda
+      body: Column(
+        children: [
+          if (_mostrarBusqueda)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: TextField(
+                  controller: _busquedaController,
+                  decoration: InputDecoration(
+                    hintText: 'Buscar por nombre',
+                    prefixIcon: Icon(Icons.search),
+                    suffixIcon: IconButton(
+                      icon: Icon(Icons.close),
+                      onPressed: () {
+                        _busquedaController.clear();
+                        setState(() {
+                          _textoBusqueda = '';
+                          _mostrarBusqueda = false;
+                        });
+                      },
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.edit),
-                        onPressed:
-                            () => abrirCajaCita(docID: docID, datos: data),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: const Text('¿Elimiación de cita?'),
-                                content: const Text(
-                                  '¿Estás seguro de que deseas eliminar dicha cita?',
-                                ),
-                                actions: [
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: const Text('Cancelar'),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      firestoreService.eliminarCita(docID);
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: const Text('Eliminar'),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                        icon: const Icon(Icons.delete),
-                      ),
-                    ],
-                  ),
-                );
+                  onChanged: (value) {
+                    setState(() => _textoBusqueda = value.toLowerCase());
+                  },
+                ),
+              ),
+            ),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: firestoreService.obtenerFlujoDeCitas(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  List listaCitas = snapshot.data!.docs;
+
+                  if (_textoBusqueda.isNotEmpty) {
+                    listaCitas =
+                        listaCitas.where((doc) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          final nombre =
+                              data['nombre']?.toString().toLowerCase() ?? '';
+                          return nombre.contains(_textoBusqueda);
+                        }).toList();
+                  }
+
+                  if (listaCitas.isEmpty) {
+                    return const Center(
+                      child: Text('No se encontraron citas con ese nombre.'),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: listaCitas.length,
+                    itemBuilder: (context, index) {
+                      DocumentSnapshot document = listaCitas[index];
+                      String docID = document.id;
+                      Map<String, dynamic> data =
+                          document.data() as Map<String, dynamic>;
+
+                      String nombre =
+                          data['nombre']?.toString() ?? 'Sin nombre';
+                      String motivo =
+                          data['motivo']?.toString() ?? 'Sin motivo';
+                      String sala = data['sala']?.toString() ?? 'Sin sala';
+                      String telefono =
+                          data['telefono']?.toString() ?? 'Sin teléfono';
+
+                      Timestamp ts = data['fechaHora'];
+                      DateTime fechaHora = ts.toDate();
+
+                      String fechaStr =
+                          '${fechaHora.day}/${fechaHora.month}/${fechaHora.year}';
+                      String horaStr =
+                          '${fechaHora.hour.toString().padLeft(2, '0')}:${fechaHora.minute.toString().padLeft(2, '0')}';
+                      String estado =
+                          data['estado']?.toString() ?? 'Programado';
+
+                      double precioBase =
+                          (data['precio'] != null)
+                              ? double.tryParse(data['precio'].toString()) ??
+                                  0.0
+                              : 0.0;
+
+                      List<dynamic> extras = data['extras'] ?? [];
+                      double totalExtras = extras.fold(
+                        0.0,
+                        (suma, item) => suma + (item['monto'] ?? 0.0),
+                      );
+
+                      double total = precioBase + totalExtras;
+
+                      return ListTile(
+                        title: Text(nombre),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Fecha: $fechaStr  Hora: $horaStr'),
+                            Text('Motivo: $motivo'),
+                            Text('Sala: $sala'),
+                            Text('Teléfono: $telefono'),
+                            Text(
+                              'Precio base: \$${precioBase.toStringAsFixed(2)}',
+                            ),
+                            Text('Extras: \$${totalExtras.toStringAsFixed(2)}'),
+                            Text('Total: \$${total.toStringAsFixed(2)}'),
+                            Text(
+                              'Estado: $estado',
+                              style: TextStyle(
+                                color:
+                                    estado == 'Completado'
+                                        ? Colors.blue
+                                        : estado == 'Cancelado'
+                                        ? Colors.red
+                                        : Colors.green,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.notifications,
+                                color: Colors.yellow,
+                              ),
+                              onPressed: () {
+                                Timestamp ts = data['fechaHora'];
+                                DateTime fechaHora = ts.toDate();
+
+                                enviarWhatsApp(telefono, nombre, fechaHora);
+                              },
+                            ),
+
+                            IconButton(
+                              icon: Icon(Icons.edit),
+                              onPressed:
+                                  () =>
+                                      abrirCajaCita(docID: docID, datos: data),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.delete),
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: const Text('¿Elimiación de cita?'),
+                                      content: const Text(
+                                        '¿Estás seguro de que deseas eliminar dicha cita?',
+                                      ),
+                                      actions: [
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: const Text('Cancelar'),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            firestoreService.eliminarCita(
+                                              docID,
+                                            );
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: const Text('Eliminar'),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.medical_services_outlined),
+                              onPressed:
+                                  () => abrirGestionDeExtras(docID, data),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                } else {
+                  return const Center(child: CircularProgressIndicator());
+                }
               },
-            );
-          } else {
-            return const Text('No notes...');
-          }
-        },
+            ),
+          ),
+        ],
       ),
     );
   }

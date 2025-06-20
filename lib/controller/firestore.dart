@@ -14,6 +14,7 @@ class FirestoreService {
     required String telefono,
     required double precio,
     required DateTime fechaHora,
+    String estado = 'Programado',
   }) {
     return citas.add({
       'nombre': nombre,
@@ -23,6 +24,7 @@ class FirestoreService {
       'precio': precio,
       'fechaHora': Timestamp.fromDate(fechaHora),
       'timestamp': Timestamp.now(),
+      'estado': estado,
     });
   }
 
@@ -68,8 +70,4 @@ class FirestoreService {
 
     return query.docs.isNotEmpty;
   }
-
- //-----------------------------------------------------------------------
- //Autenticación
- 
 }

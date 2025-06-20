@@ -155,9 +155,26 @@ class _PantallaReportesState extends State<PantallaReportes> {
 
                         // Calcular total ingresos
                         double totalIngresos = 0;
+
                         for (var doc in citas) {
-                          final precio = (doc['precio'] ?? 0).toDouble();
-                          totalIngresos += precio;
+                          final data = doc.data() as Map<String, dynamic>;
+
+                          double precioBase =
+                              (data['precio'] != null)
+                                  ? double.tryParse(
+                                        data['precio'].toString(),
+                                      ) ??
+                                      0.0
+                                  : 0.0;
+
+                          List<dynamic> extras = data['extras'] ?? [];
+                          double totalExtras = extras.fold(
+                            0.0,
+                            (suma, item) => suma + (item['monto'] ?? 0.0),
+                          );
+
+                          double total = precioBase + totalExtras;
+                          totalIngresos += total;
                         }
 
                         return Column(
