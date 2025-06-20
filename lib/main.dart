@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:permission_handler/permission_handler.dart';
 
 // Instancia global del plugin
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -16,10 +17,30 @@ Future<void> inicializarNotificaciones() async {
   const AndroidInitializationSettings androidInitSettings =
       AndroidInitializationSettings('@mipmap/ic_launcher');
 
-  const InitializationSettings initSettings =
-      InitializationSettings(android: androidInitSettings);
+  const InitializationSettings initSettings = InitializationSettings(
+    android: androidInitSettings,
+  );
 
   await flutterLocalNotificationsPlugin.initialize(initSettings);
+
+  const AndroidNotificationChannel canal = AndroidNotificationChannel(
+    'canal_citas',
+    'Citas',
+    description: 'Canal para notificaciones de citas',
+    importance: Importance.high,
+  );
+
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >()
+      ?.createNotificationChannel(canal);
+}
+
+Future<void> pedirPermisoNotificaciones() async {
+  if (await Permission.notification.isDenied) {
+    await Permission.notification.request();
+  }
 }
 
 void main() async {
@@ -27,6 +48,7 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   tz.initializeTimeZones(); // Zona horaria local
   await inicializarNotificaciones(); // Inicializa notificaciones
+  await pedirPermisoNotificaciones(); // Pide permiso de notificaciones
 
   runApp(const MainApp());
 }

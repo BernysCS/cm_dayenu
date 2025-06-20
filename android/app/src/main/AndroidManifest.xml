@@ -3,7 +3,8 @@
     <!--Permisos necesarios para camaras y gallery -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/> 
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Este es opcional en Android 10+ -->
 
     <queries>
@@ -19,6 +20,23 @@
         android:label="cm_dayenu"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+    <receiver
+        android:name="com.dexterous.flutterlocalnotifications.FlutterLocalNotificationsPlugin"
+        android:exported="true"/>
+
+    <receiver
+        android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
+        android:exported="true"/>
+
+    <receiver
+        android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
+        android:enabled="true"
+        android:exported="true">
+        <intent-filter>
+            <action android:name="android.intent.action.BOOT_COMPLETED"/>
+        </intent-filter>
+    </receiver>
 
         <activity
             android:name=".MainActivity"

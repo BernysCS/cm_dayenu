@@ -7,6 +7,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+// pendiente de que funcione la notificación dependiendo de la cita pero la notificación que esta en el appbar si funciona
 
 class PantallaPrincipal extends StatefulWidget {
   const PantallaPrincipal({super.key});
@@ -28,35 +29,47 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
   DateTime? fechaSeleccionada;
   TimeOfDay? horaSeleccionada;
 
-void programarNotificacion(
-  DateTime fechaHora,
-  String nombre,
-  String id,
-  String horaStr,
-) {
-  final fechaNotificacion = fechaHora.subtract(const Duration(minutes: 10));
+  void programarNotificacion(
+    DateTime fechaHora,
+    String sala,
+    String id,
+    String horaStr,
+  ) {
+    try {
+      final fechaNotificacion = fechaHora.subtract(const Duration(minutes: 10));
 
-  if (fechaNotificacion.isAfter(DateTime.now())) {
-    flutterLocalNotificationsPlugin.zonedSchedule(
-      id.hashCode,
-      'Cita próxima',
-      'Tu cita con $nombre comenzará a las $horaStr',
-      tz.TZDateTime.from(fechaNotificacion, tz.local),
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          'canal_citas',
-          'Citas',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.dateAndTime,
-    );
+      print('Fecha original: $fechaHora');
+      print('Fecha notificación: $fechaNotificacion');
+      print('Ahora: ${DateTime.now()}');
+
+      if (fechaNotificacion.isAfter(DateTime.now())) {
+        flutterLocalNotificationsPlugin.zonedSchedule(
+          id.hashCode,
+          'Cita próxima',
+          'Nueva cita en sala $sala a las $horaStr. Tenlo en cuenta.',
+          tz.TZDateTime.from(fechaNotificacion, tz.local),
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              'canal_citas',
+              'Citas',
+              importance: Importance.max,
+              priority: Priority.high,
+            ),
+          ),
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.dateAndTime,
+        );
+        print('Notificación programada correctamente');
+      } else {
+        print('No se programa notificación: fechaNotificacion ya pasó');
+      }
+    } catch (e, stack) {
+      print('Error al programar notificación: $e');
+      print(stack);
+    }
   }
-}
-
 
   void abrirCajaCita({String? docID, Map<String, dynamic>? datos}) {
     if (datos != null) {
@@ -275,9 +288,21 @@ void programarNotificacion(
 
                     // Crear nueva cita
                     if (docID == null) {
-                      await FirebaseFirestore.instance
+                      final docRef = await FirebaseFirestore.instance
                           .collection('citas')
                           .add(nuevaCita);
+
+                      // Generar hora en formato texto
+                      String horaStr =
+                          '${fechaHora.hour.toString().padLeft(2, '0')}:${fechaHora.minute.toString().padLeft(2, '0')}';
+
+                      // Programar notificación con el nuevo ID
+                      programarNotificacion(
+                        fechaHora,
+                        sala,
+                        docRef.id,
+                        horaStr,
+                      );
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -286,13 +311,23 @@ void programarNotificacion(
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
-                    }
-                    // O actualizar cita existente
-                    else {
+                    } else {
                       await FirebaseFirestore.instance
                           .collection('citas')
                           .doc(docID)
                           .update(nuevaCita);
+
+                      // Generar hora en formato texto
+                      String horaStr =
+                          '${fechaHora.hour.toString().padLeft(2, '0')}:${fechaHora.minute.toString().padLeft(2, '0')}';
+
+                      // Programar notificación con el ID existente
+                      programarNotificacion(
+                        fechaHora,
+                        nombreController.text.trim(),
+                        docID,
+                        horaStr,
+                      );
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -343,6 +378,7 @@ void programarNotificacion(
               );
             },
           ),
+
           IconButton(
             icon: const Icon(Icons.info_outline),
             onPressed: () {
@@ -401,9 +437,6 @@ void programarNotificacion(
 
                 String horaStr =
                     '${fechaHora.hour.toString().padLeft(2, '0')}:${fechaHora.minute.toString().padLeft(2, '0')}';
-
-                programarNotificacion(fechaHora, nombre, docID, horaStr);
-
                 return ListTile(
                   title: Text(nombre),
                   subtitle: Column(
