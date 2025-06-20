@@ -32,21 +32,33 @@ class _NavegacionState extends State<Navegacion> {
           icon: Icon(Icons.calendar_today),
           label: 'Citas',
         ),
-        BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Mensajes'),
-        BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Usuarios'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.message),
+          label: 'Mensajes',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.people),
+          label: 'Usuarios',
+        ),
         BottomNavigationBarItem(
           icon: Icon(Icons.description),
           label: 'Reportes',
         ),
       ];
     } else if (widget.tipoUsuario == "doctor") {
-      pantallas = [const PantallaPrincipal(), const PantallaMensajes()];
+      pantallas = [
+        const PantallaPrincipal(),
+        const PantallaMensajes(),
+      ];
       items = const [
         BottomNavigationBarItem(
           icon: Icon(Icons.calendar_today),
           label: 'Citas',
         ),
-        BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Mensajes'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.message),
+          label: 'Mensajes',
+        ),
       ];
     } else {
       pantallas = [
@@ -59,25 +71,41 @@ class _NavegacionState extends State<Navegacion> {
           icon: Icon(Icons.calendar_today),
           label: 'Citas',
         ),
-        BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Mensajes'),
-        BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Usuarios'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.message),
+          label: 'Mensajes',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.people),
+          label: 'Usuarios',
+        ),
       ];
     }
 
     return Scaffold(
       body: pantallas[_indiceActual],
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.white,
-        selectedItemColor: Colors.teal,
-        unselectedItemColor: Colors.grey,
-        currentIndex: _indiceActual,
-        type: BottomNavigationBarType.fixed,
-        onTap: (index) {
-          setState(() {
-            _indiceActual = index;
-          });
-        },
-        items: items,
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: Colors.grey.shade300, // color de la línea
+              width: 1.0, // grosor de la línea
+            ),
+          ),
+        ),
+        child: BottomNavigationBar(
+          backgroundColor: Colors.blue.shade50,
+          selectedItemColor: const Color.fromRGBO(0, 150, 136, 1),
+          unselectedItemColor: Colors.grey,
+          currentIndex: _indiceActual,
+          type: BottomNavigationBarType.fixed,
+          onTap: (index) {
+            setState(() {
+              _indiceActual = index;
+            });
+          },
+          items: items,
+        ),
       ),
     );
   }

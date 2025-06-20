@@ -1,3 +1,4 @@
+import 'package:cm_dayenu/controller/controller_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
@@ -35,23 +36,28 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
     }
   }
 
-  // ✅ Diálogo de información
   void _mostrarInfoDialog() {
     showDialog(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            title: const Text("Información"),
-            content: const Text(
-              "Aquí puedes seleccionar un mensaje rápido, escribir uno personalizado o escanear texto desde una imagen para enviarlo por WhatsApp.",
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Cerrar"),
+      builder: (_) => AlertDialog(
+        title: const Text("Información"),
+        content: const Text(
+          "Aquí puedes seleccionar un mensaje rápido, escribir uno personalizado o escanear texto desde una imagen para enviarlo por WhatsApp.",
+        ),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(
+              backgroundColor: const Color(0xFF009688),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-            ],
+            ),
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cerrar"),
           ),
+        ],
+      ),
     );
   }
 
@@ -85,43 +91,39 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder:
-          (_) => Padding(
-            padding: const EdgeInsets.all(20),
-            child: Wrap(
-              runSpacing: 12,
-              children: [
-                const Center(
-                  child: Text(
-                    "Selecciona la fuente del documento",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.camera_alt),
-                  title: const Text("Escanear con cámara"),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _escanearTexto(source: ImageSource.camera);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.photo_library),
-                  title: const Text("Seleccionar desde galería"),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _escanearTexto(source: ImageSource.gallery);
-                  },
-                ),
-              ],
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Wrap(
+          runSpacing: 12,
+          children: [
+            const Center(
+              child: Text(
+                "Selecciona la fuente del documento",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
             ),
-          ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt, size: 16,color: Color(0xFF009688)),
+              title: const Text("Escanear con cámara"),
+              onTap: () {
+                Navigator.pop(context);
+                _escanearTexto(source: ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library,size: 16,color: Color(0xFF009688)),
+              title: const Text("Seleccionar desde galería"),
+              onTap: () {
+                Navigator.pop(context);
+                _escanearTexto(source: ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  // ============================
-  // UI PRINCIPAL
-  // ============================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -156,6 +158,8 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
                       style: TextStyle(fontSize: 16),
                     ),
                     const SizedBox(height: 12),
+
+                    // Lista de mensajes predefinidos como ElevatedButton cards
                     ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -163,23 +167,41 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
                       separatorBuilder: (_, __) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final mensaje = _mensajesPreestablecidos[index];
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: Colors.pink[100],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: ListTile(
-                            title: Text(mensaje),
-                            trailing: const Icon(
-                              Icons.arrow_forward_ios,
-                              size: 18,
+                        return ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.pink[100],
+                            elevation: 6,
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 16, horizontal: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            onTap: () {
-                              setState(() {
-                                _mensajeSeleccionado = mensaje;
-                                _mensajeController.text = mensaje;
-                              });
-                            },
+                            alignment: Alignment.centerLeft,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _mensajeSeleccionado = mensaje;
+                              _mensajeController.text = mensaje;
+                            });
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  mensaje,
+                                  style: const TextStyle(
+                                    color: Colors.black87,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                              const Icon(
+                                Icons.arrow_forward_ios,
+                                size: 18,
+                                color: Colors.black54,
+                              ),
+                            ],
                           ),
                         );
                       },
@@ -219,7 +241,7 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
                         Expanded(
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
+                              backgroundColor: ControllerColors.primary,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -251,7 +273,7 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
                             onPressed: _mostrarOpcionesEscaneo,
                             icon: const Icon(
                               Icons.document_scanner,
-                              color: Colors.white,
+                              color: Color.fromARGB(255, 197, 207, 206), 
                             ),
                             label: const Text(
                               "Escanear",
