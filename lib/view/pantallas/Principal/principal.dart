@@ -340,6 +340,26 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                 ),
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
+                    if (fechaSeleccionada == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Debes seleccionar una fecha.'),
+                          backgroundColor: Colors.redAccent,
+                        ),
+                      );
+                      return;
+                    }
+
+                    if (horaSeleccionada == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Debes seleccionar una hora.'),
+                          backgroundColor: Colors.redAccent,
+                        ),
+                      );
+                      return;
+                    }
+
                     final sala = salaController.text.trim();
 
                     // Combina fecha y hora seleccionada en un solo DateTime
@@ -604,8 +624,6 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
-
       appBar: AppBar(
         title: const Text('Dayenú'),
         centerTitle: false,
@@ -679,7 +697,6 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
           ),
         ],
       ),
-
 
       floatingActionButton: FloatingActionButton(
         backgroundColor: Color(0xFF009688),
