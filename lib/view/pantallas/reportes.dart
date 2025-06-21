@@ -9,12 +9,9 @@ class PantallaReportes extends StatefulWidget {
 }
 
 class _PantallaReportesState extends State<PantallaReportes> {
-  //guarda el mes y el año que selecciona el usuario
   int _mesSeleccionado = DateTime.now().month;
   int _anioSeleccionado = DateTime.now().year;
 
-  // Rango fecha para filtro de citas
-  //Calcula la fecha de inicio y fin del mes seleccionado para filtrar las citas de ese mes.
   DateTime get _inicioMes => DateTime(_anioSeleccionado, _mesSeleccionado, 1);
   DateTime get _finMes => DateTime(
     _anioSeleccionado,
@@ -45,12 +42,10 @@ class _PantallaReportesState extends State<PantallaReportes> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        //agregue el icono para la inforacion de reportes
-        title: Text('Reporte Mensual'),
+        title: const Text('Reporte Mensual'),
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
-            //icono nuevo de la libreria Icon para informacion
             onPressed: () {
               showDialog(
                 context: context,
@@ -58,12 +53,31 @@ class _PantallaReportesState extends State<PantallaReportes> {
                   return AlertDialog(
                     title: const Text('Información'),
                     content: const Text(
-                      'Informacion sobre los reportes, actividad, usuarios pacientes e ingresos.',
+                      'Información sobre los reportes: citas, usuarios, pacientes e ingresos mensuales.',
                     ),
                     actions: [
                       ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFF009688), // color teal
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12, // altura
+                          ),
+                          elevation: 2, // misma sombra que los botones del form
+                        ),
                         onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Cerrar'),
+                        child: const Text(
+                          'Cerrar',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight:
+                                FontWeight.bold, // mismo peso que el form
+                          ),
+                        ),
                       ),
                     ],
                   );
@@ -89,18 +103,8 @@ class _PantallaReportesState extends State<PantallaReportes> {
                       value: mes,
                       child: Text(
                         [
-                          'Ene',
-                          'Feb',
-                          'Mar',
-                          'Abr',
-                          'May',
-                          'Jun',
-                          'Jul',
-                          'Ago',
-                          'Sep',
-                          'Oct',
-                          'Nov',
-                          'Dic',
+                          'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+                          'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
                         ][index],
                       ),
                     );
@@ -132,28 +136,23 @@ class _PantallaReportesState extends State<PantallaReportes> {
 
             const SizedBox(height: 20),
 
-            // Reporte citas y usuarios con StreamBuilder
+            // Reportes
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    //muestra los datos de las citas
+                    // Citas
                     StreamBuilder<QuerySnapshot>(
                       stream: _obtenerCitasPorMes(),
                       builder: (context, snapshotCitas) {
                         if (snapshotCitas.hasError) {
                           return const Text('Error al cargar citas');
                         }
-                        if (snapshotCitas.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
+                        if (snapshotCitas.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
                         }
 
                         final citas = snapshotCitas.data!.docs;
-
-                        // Calcular total ingresos
                         double totalIngresos = 0;
 
                         for (var doc in citas) {
@@ -177,79 +176,123 @@ class _PantallaReportesState extends State<PantallaReportes> {
                           totalIngresos += total;
                         }
 
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Total citas en ${_mesSeleccionado.toString().padLeft(2, '0')}/$_anioSeleccionado: ${citas.length}',
+                        return Card(
+                          color: Colors.blue.shade50,
+                          elevation: 5,
+                          margin: const EdgeInsets.only(bottom: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 150,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Citas del mes',
+                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text('Total citas en ${_mesSeleccionado.toString().padLeft(2, '0')}/$_anioSeleccionado: ${citas.length}'),
+                                  Text('Ingresos totales: \$${totalIngresos.toStringAsFixed(2)}'),
+                                ],
+                              ),
                             ),
-                            Text(
-                              'Ingresos totales: \$${totalIngresos.toStringAsFixed(2)}',
+                          ),
+                        );
+                      },
+                    ),
+
+                    // Usuarios
+                    StreamBuilder<QuerySnapshot>(
+                      stream: _obtenerUsuarios(),
+                      builder: (context, snapshotUsuarios) {
+                        if (snapshotUsuarios.hasError) {
+                          return const Text('Error al cargar usuarios');
+                        }
+                        if (snapshotUsuarios.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+
+                        final usuarios = snapshotUsuarios.data!.docs;
+                        final Map<String, int> conteoRoles = {};
+                        for (var u in usuarios) {
+                          final rol = u['rol'] ?? 'desconocido';
+                          conteoRoles[rol] = (conteoRoles[rol] ?? 0) + 1;
+                        }
+
+                        return Card(
+                          color: Colors.green.shade50,
+                          elevation: 5,
+                          margin: const EdgeInsets.only(bottom: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 150,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Usuarios',
+                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text('Total usuarios: ${usuarios.length}'),
+                                  for (var rol in conteoRoles.keys)
+                                    Text(' - $rol: ${conteoRoles[rol]}'),
+                                ],
+                              ),
                             ),
-                            const SizedBox(height: 20),
+                          ),
+                        );
+                      },
+                    ),
 
-                            // Usuarios y pacientes también en otro StreamBuilder
-                            StreamBuilder<QuerySnapshot>(
-                              stream: _obtenerUsuarios(),
-                              builder: (context, snapshotUsuarios) {
-                                if (snapshotUsuarios.hasError) {
-                                  return const Text('Error al cargar usuarios');
-                                }
-                                if (snapshotUsuarios.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return const Center(
-                                    child: CircularProgressIndicator(),
-                                  );
-                                }
+                    // Pacientes
+                    StreamBuilder<QuerySnapshot>(
+                      stream: _obtenerPacientes(),
+                      builder: (context, snapshotPacientes) {
+                        if (snapshotPacientes.hasError) {
+                          return const Text('Error al cargar pacientes');
+                        }
+                        if (snapshotPacientes.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
 
-                                final usuarios = snapshotUsuarios.data!.docs;
+                        final pacientes = snapshotPacientes.data!.docs;
 
-                                // Contar usuarios por rol
-                                final Map<String, int> conteoRoles = {};
-                                for (var u in usuarios) {
-                                  final rol = u['rol'] ?? 'desconocido';
-                                  conteoRoles[rol] =
-                                      (conteoRoles[rol] ?? 0) + 1;
-                                }
-
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Total usuarios: ${usuarios.length}'),
-                                    for (var rol in conteoRoles.keys)
-                                      Text(' - $rol: ${conteoRoles[rol]}'),
-
-                                    const SizedBox(height: 20),
-
-                                    // Pacientes
-                                    StreamBuilder<QuerySnapshot>(
-                                      stream: _obtenerPacientes(),
-                                      builder: (context, snapshotPacientes) {
-                                        if (snapshotPacientes.hasError) {
-                                          return const Text(
-                                            'Error al cargar pacientes',
-                                          );
-                                        }
-                                        if (snapshotPacientes.connectionState ==
-                                            ConnectionState.waiting) {
-                                          return const Center(
-                                            child: CircularProgressIndicator(),
-                                          );
-                                        }
-
-                                        final pacientes =
-                                            snapshotPacientes.data!.docs;
-
-                                        return Text(
-                                          'Total pacientes: ${pacientes.length}',
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                );
-                              },
+                        return Card(
+                          color: Colors.orange.shade50,
+                          elevation: 5,
+                          margin: const EdgeInsets.only(bottom: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 150,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Pacientes',
+                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text('Total pacientes: ${pacientes.length}'),
+                                ],
+                              ),
                             ),
-                          ],
+                          ),
                         );
                       },
                     ),

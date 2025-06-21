@@ -5,6 +5,7 @@ import 'package:cm_dayenu/view/pantallas/login/login.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cm_dayenu/controller/controller_colors.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:url_launcher/url_launcher.dart';
 
@@ -110,15 +111,33 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text(docID == null ? 'Agregar cita' : 'Editar cita'),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20), // Bordes redondeados
+            ),
+            title: Center(
+              child: Text(
+                docID == null ? 'Agregar cita' : 'Editar cita',
+                style: const TextStyle(
+                  color: Color(0xFF009688), // Verde
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
+            ),
             content: SingleChildScrollView(
               child: Form(
                 key: _formKey,
                 child: Column(
                   children: [
+                    // Campo Nombre
                     TextFormField(
                       controller: nombreController,
-                      decoration: InputDecoration(labelText: 'Nombre'),
+                      decoration: InputDecoration(
+                        labelText: 'Nombre',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Debe de ingresar un nombre';
@@ -126,9 +145,17 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                         return null;
                       },
                     ),
+                    const SizedBox(height: 10),
+
+                    // Campo Motivo
                     TextFormField(
                       controller: motivoController,
-                      decoration: InputDecoration(labelText: 'Motivo'),
+                      decoration: InputDecoration(
+                        labelText: 'Motivo',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Debe de ingresar un motivo';
@@ -136,27 +163,40 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                         return null;
                       },
                     ),
+                    const SizedBox(height: 10),
+
+                    // Campo Sala
                     TextFormField(
                       controller: salaController,
-                      decoration: InputDecoration(labelText: 'Sala'),
+                      decoration: InputDecoration(
+                        labelText: 'Sala',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       keyboardType: TextInputType.number,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Debe ingresar una sala';
                         }
                         final numero = int.tryParse(value);
-                        //esta variable final hace que
-                        //int.tryParse(value) convierte el texto a número, o da null si el texto no es válido.
                         if (numero == null || numero <= 0) {
                           return 'Numero de sala invalido';
                         }
                         return null;
                       },
                     ),
+                    const SizedBox(height: 10),
 
+                    // Campo Teléfono
                     TextFormField(
                       controller: telefonoController,
-                      decoration: InputDecoration(labelText: 'Teléfono'),
+                      decoration: InputDecoration(
+                        labelText: 'Teléfono',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       keyboardType: TextInputType.phone,
                       validator: (value) {
                         if (value == null || value.length < 8) {
@@ -165,9 +205,17 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                         return null;
                       },
                     ),
+                    const SizedBox(height: 10),
+
+                    // Campo Precio
                     TextFormField(
                       controller: precioController,
-                      decoration: InputDecoration(labelText: 'Precio'),
+                      decoration: InputDecoration(
+                        labelText: 'Precio',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       keyboardType: TextInputType.number,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -250,8 +298,21 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
               ),
             ),
             actions: [
+              // Botón Descartar
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF1F1F1), // Gris claro
+                  foregroundColor: Colors.black87,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
                 onPressed: () {
+                  // limpiar formulario
                   nombreController.clear();
                   motivoController.clear();
                   salaController.clear();
@@ -263,7 +324,20 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                 },
                 child: const Text('Descartar'),
               ),
+
+              // Botón Actualizar
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF009688), // Verde
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     final sala = salaController.text.trim();
@@ -291,12 +365,10 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                     bool hayConflicto = duplicados.docs.any((doc) {
                       final datos = doc.data() as Map<String, dynamic>;
                       final salaDoc = datos['sala'];
-                      final mismoID =
-                          (docID != null && doc.id == docID); // edición propia
+                      final mismoID = (docID != null && doc.id == docID);
                       return salaDoc == sala && !mismoID;
                     });
 
-                    // Si hay conflicto de sala, se bloquea
                     if (hayConflicto) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -310,7 +382,6 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                       return;
                     }
 
-                    // Si NO hay conflicto, se puede guardar o actualizar la cita
                     final nuevaCita = {
                       'nombre': nombreController.text.trim(),
                       'motivo': motivoController.text.trim(),
@@ -323,7 +394,6 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                       'estado': estadoSeleccionado ?? 'Programado',
                     };
 
-                    // Crear nueva cita
                     if (docID == null) {
                       final docRef = await FirebaseFirestore.instance
                           .collection('citas')
@@ -359,23 +429,18 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                           '${fechaHora.hour.toString().padLeft(2, '0')}:${fechaHora.minute.toString().padLeft(2, '0')}';
 
                       // Programar notificación con el ID existente
-                      programarNotificacion(
-                        fechaHora,
-                        nombreController.text.trim(),
-                        docID,
-                        horaStr,
-                      );
+                      programarNotificacion(fechaHora, sala, docID, horaStr);
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('¡Cita actualizada exitosamente!'),
-                          backgroundColor: Colors.blue,
+                          backgroundColor: Color.fromARGB(255, 15, 154, 189),
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
                     }
 
-                    // Limpia y cierra el formulario
+                    // limpiar
                     nombreController.clear();
                     motivoController.clear();
                     salaController.clear();
@@ -387,7 +452,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                     Navigator.pop(context);
                   }
                 },
-                child: Text(docID == null ? 'Guardar Cita' : 'Actualizar Cita'),
+                child: Text(docID == null ? 'Guardar' : 'Actualizar'),
               ),
             ],
           ),
@@ -539,8 +604,11 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+
+
       appBar: AppBar(
-        title: Text('Dayenú'),
+        title: const Text('Dayenú'),
+        centerTitle: false,
         actions: [
           if (!_mostrarBusqueda)
             IconButton(
@@ -557,8 +625,6 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
             onPressed: () async {
               final prefs = await SharedPreferences.getInstance();
               await prefs.clear(); // Limpia la sesión
-
-              // Volver a pantalla de login
               if (!mounted) return;
               Navigator.pushAndRemoveUntil(
                 context,
@@ -570,19 +636,40 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
 
           IconButton(
             icon: const Icon(Icons.info_outline),
+
             onPressed: () {
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
                   return AlertDialog(
                     title: const Text('Información'),
+
                     content: const Text(
                       'Página principal de creación de citas.',
                     ),
                     actions: [
                       ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFF009688), // color teal
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12, // altura
+                          ),
+                          elevation: 2, // misma sombra que los botones del form
+                        ),
                         onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Cerrar'),
+                        child: const Text(
+                          'Cerrar',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight:
+                                FontWeight.bold, // mismo peso que el form
+                          ),
+                        ),
                       ),
                     ],
                   );
@@ -592,12 +679,16 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
           ),
         ],
       ),
+
+
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Color(0xFF009688),
+
         onPressed: () => abrirCajaCita(),
-        child: Icon(Icons.add),
+
+        child: const Icon(Icons.add, color: Colors.white),
       ),
 
-      // busqueda
       body: Column(
         children: [
           if (_mostrarBusqueda)
@@ -605,16 +696,24 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.grey[200],
+                  color: Colors.grey[100],
                   borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: TextField(
                   controller: _busquedaController,
                   decoration: InputDecoration(
-                    hintText: 'Buscar por nombre',
-                    prefixIcon: Icon(Icons.search),
+                    hintText: 'Buscar por nombre...',
+                    prefixIcon: Icon(Icons.search, color: Colors.grey),
                     suffixIcon: IconButton(
-                      icon: Icon(Icons.close),
+                      icon: Icon(Icons.close, color: Colors.grey),
                       onPressed: () {
                         _busquedaController.clear();
                         setState(() {
@@ -624,7 +723,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                       },
                     ),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   onChanged: (value) {
                     setState(() => _textoBusqueda = value.toLowerCase());
@@ -656,6 +755,10 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                   }
 
                   return ListView.builder(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     itemCount: listaCitas.length,
                     itemBuilder: (context, index) {
                       DocumentSnapshot document = listaCitas[index];
@@ -670,7 +773,6 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                       String sala = data['sala']?.toString() ?? 'Sin sala';
                       String telefono =
                           data['telefono']?.toString() ?? 'Sin teléfono';
-
                       Timestamp ts = data['fechaHora'];
                       DateTime fechaHora = ts.toDate();
 
@@ -695,95 +797,204 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
 
                       double total = precioBase + totalExtras;
 
-                      return ListTile(
-                        title: Text(nombre),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Fecha: $fechaStr  Hora: $horaStr'),
-                            Text('Motivo: $motivo'),
-                            Text('Sala: $sala'),
-                            Text('Teléfono: $telefono'),
-                            Text(
-                              'Precio base: \$${precioBase.toStringAsFixed(2)}',
-                            ),
-                            Text('Extras: \$${totalExtras.toStringAsFixed(2)}'),
-                            Text('Total: \$${total.toStringAsFixed(2)}'),
-                            Text(
-                              'Estado: $estado',
-                              style: TextStyle(
-                                color:
-                                    estado == 'Completado'
-                                        ? Colors.blue
-                                        : estado == 'Cancelado'
-                                        ? Colors.red
-                                        : Colors.green,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                      Color estadoColor;
+                      if (estado == 'Completado') {
+                        estadoColor = const Color(0xFF41A2AE); // azul
+                      } else if (estado == 'Cancelado') {
+                        estadoColor = const Color(0xFFF599B0); // rosa
+                      } else {
+                        estadoColor = const Color(0xFF579E93); // verde
+                      }
+
+                      return Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                Icons.notifications,
-                                color: Colors.yellow,
-                              ),
-                              onPressed: () {
-                                Timestamp ts = data['fechaHora'];
-                                DateTime fechaHora = ts.toDate();
-
-                                enviarWhatsApp(telefono, nombre, fechaHora);
-                              },
-                            ),
-
-                            IconButton(
-                              icon: Icon(Icons.edit),
-                              onPressed:
-                                  () =>
-                                      abrirCajaCita(docID: docID, datos: data),
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.delete),
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: const Text('¿Elimiación de cita?'),
-                                      content: const Text(
-                                        '¿Estás seguro de que deseas eliminar dicha cita?',
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.person, color: Colors.teal),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      nombre,
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
                                       ),
-                                      actions: [
-                                        ElevatedButton(
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                          child: const Text('Cancelar'),
+                                    ),
+                                  ),
+                                  Chip(
+                                    label: Text(
+                                      estado,
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                    backgroundColor: estadoColor,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today,
+                                    size: 18,
+                                    color: Colors.grey[700],
+                                  ),
+                                  SizedBox(width: 6),
+                                  Text('Fecha: $fechaStr'),
+                                  SizedBox(width: 12),
+                                  Icon(
+                                    Icons.access_time,
+                                    size: 18,
+                                    color: Colors.grey[700],
+                                  ),
+                                  SizedBox(width: 6),
+                                  Text('Hora: $horaStr'),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text('Motivo: $motivo'),
+                              Text('Sala: $sala'),
+                              Text('Teléfono: $telefono'),
+                              const Divider(thickness: 1, color: Colors.grey),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Precio base: \$${precioBase.toStringAsFixed(2)}',
                                         ),
-                                        ElevatedButton(
-                                          onPressed: () {
-                                            firestoreService.eliminarCita(
-                                              docID,
-                                            );
-                                            Navigator.of(context).pop();
-                                          },
-                                          child: const Text('Eliminar'),
+                                        Text(
+                                          'Extras: \$${totalExtras.toStringAsFixed(2)}',
+                                        ),
+                                        Text(
+                                          'Total: \$${total.toStringAsFixed(2)}',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.teal,
+                                          ),
                                         ),
                                       ],
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.medical_services_outlined),
-                              onPressed:
-                                  () => abrirGestionDeExtras(docID, data),
-                            ),
-                          ],
+                                    ),
+                                  ),
+
+                                  Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            icon: Icon(
+                                              Icons.notifications,
+                                              color: Colors.amber,
+                                            ),
+                                            tooltip: 'Enviar recordatorio',
+                                            onPressed: () {
+                                              enviarWhatsApp(
+                                                telefono,
+                                                nombre,
+                                                fechaHora,
+                                              );
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: Icon(
+                                              Icons.edit,
+                                              color: Colors.blueGrey,
+                                            ),
+                                            tooltip: 'Editar cita',
+                                            onPressed:
+                                                () => abrirCajaCita(
+                                                  docID: docID,
+                                                  datos: data,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            icon: Icon(
+                                              Icons.delete,
+                                              color: Colors.redAccent,
+                                            ),
+                                            tooltip: 'Eliminar cita',
+                                            onPressed: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (
+                                                  BuildContext context,
+                                                ) {
+                                                  return AlertDialog(
+                                                    title: const Text(
+                                                      '¿Eliminar cita?',
+                                                    ),
+                                                    content: const Text(
+                                                      '¿Estás seguro de que deseas eliminar esta cita?',
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          Navigator.of(
+                                                            context,
+                                                          ).pop();
+                                                        },
+                                                        child: const Text(
+                                                          'Cancelar',
+                                                        ),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          firestoreService
+                                                              .eliminarCita(
+                                                                docID,
+                                                              );
+                                                          Navigator.of(
+                                                            context,
+                                                          ).pop();
+                                                        },
+                                                        child: const Text(
+                                                          'Eliminar',
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
+                                              );
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: Icon(
+                                              Icons.medical_services_outlined,
+                                              color: Colors.deepPurple,
+                                            ),
+                                            tooltip: 'Ver extras',
+                                            onPressed:
+                                                () => abrirGestionDeExtras(
+                                                  docID,
+                                                  data,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     },
