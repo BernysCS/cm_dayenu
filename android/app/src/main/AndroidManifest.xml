@@ -17,7 +17,7 @@
     </queries>
     
     <application
-        android:label="cm_dayenu"
+        android:label="Dayenú"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 
