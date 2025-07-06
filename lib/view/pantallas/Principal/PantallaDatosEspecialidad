@@ -1,0 +1,133 @@
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class PantallaDatosEspecialidad extends StatefulWidget {
+  final String docID;
+  final String nombre;
+
+  const PantallaDatosEspecialidad({
+    Key? key,
+    required this.docID,
+    required this.nombre,
+  }) : super(key: key);
+
+  @override
+  State<PantallaDatosEspecialidad> createState() => _PantallaDatosEspecialidadState();
+}
+
+class _PantallaDatosEspecialidadState extends State<PantallaDatosEspecialidad> {
+  String areaSeleccionada = 'Ginecologia';
+  final Map<String, Map<String, dynamic>> datosFormulario = {};
+
+  final Map<String, List<String>> camposPorArea = {
+    'Ginecologia': ['Última menstruación', 'Método anticonceptivo', 'Embarazos previos'],
+    'Psicologia': ['Motivo de consulta', 'Estado emocional', 'Diagnóstico previo'],
+    'Pediatria hematooncologa': ['Peso', 'Altura', 'Recuento de glóbulos blancos'],
+    'pediatria': ['Peso', 'Altura', 'Vacunas al día'],
+    'nutrición': ['IMC', 'Dieta actual', 'Alergias alimenticias'],
+    'Urgencialogo': ['Presión arterial', 'Frecuencia cardíaca', 'Diagnóstico provisional'],
+    'Especialista pie diabetico': ['Estado de pie', 'Nivel de glucosa', 'Úlceras presentes'],
+    'neurocirujano': ['Reflejos neurológicos', 'Dolor de cabeza', 'Pérdida de visión'],
+    'Periodoncia': ['Estado encías', 'Sangrado', 'Placa bacteriana'],
+    'Ortodoncia': ['Tipo de mordida', 'Brackets actuales', 'Dolor mandibular'],
+    'odontologia': ['Caries presentes', 'Higiene oral', 'Última limpieza'],
+    'Ortopedia': ['Fracturas previas', 'Dolor articular', 'Movilidad'],
+    'medicina interna': ['Condiciones crónicas', 'Medicamentos actuales', 'Síntomas principales'],
+  };
+
+  final Map<String, TextEditingController> controladores = {};
+
+  @override
+  void dispose() {
+    controladores.values.forEach((c) => c.dispose());
+    super.dispose();
+  }
+
+  void guardarDatos() async {
+    final datos = {
+      for (var campo in camposPorArea[areaSeleccionada]!)
+        campo: controladores[campo]?.text ?? '',
+    };
+
+    await FirebaseFirestore.instance
+        .collection('citas')
+        .doc(widget.docID)
+        .collection('datosAreas')
+        .doc(areaSeleccionada)
+        .set({
+      'datos': datos,
+      'timestamp': Timestamp.now(),
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Datos de $areaSeleccionada guardados')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final campos = camposPorArea[areaSeleccionada]!;
+    controladores.clear();
+    for (var campo in campos) {
+      controladores[campo] = TextEditingController();
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Datos de ${widget.nombre}'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DropdownButton<String>(
+              value: areaSeleccionada,
+              isExpanded: true,
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    areaSeleccionada = value;
+                  });
+                }
+              },
+              items: camposPorArea.keys.map((area) {
+                return DropdownMenuItem<String>(
+                  value: area,
+                  child: Text(area),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: ListView(
+                children: campos.map((campo) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: TextField(
+                      controller: controladores[campo],
+                      decoration: InputDecoration(
+                        labelText: campo,
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.save),
+              label: const Text('Guardar'),
+              onPressed: guardarDatos,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.teal,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

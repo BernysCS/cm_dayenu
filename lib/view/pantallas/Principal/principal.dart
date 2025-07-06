@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cm_dayenu/controller/firestore.dart';
 import 'package:cm_dayenu/main.dart';
+import 'package:cm_dayenu/view/pantallas/Principal/PantallaDatosEspecialidad';
 import 'package:cm_dayenu/view/pantallas/login/login.dart';
+import 'package:cm_dayenu/view/pantallas/Principal/pantalla_tareas.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,6 +37,73 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
   bool _mostrarBusqueda = false;
   final TextEditingController _busquedaController = TextEditingController();
   String _textoBusqueda = '';
+
+  void mostrarDatosArea(String docID, String nombrePaciente) async {
+    // Leer los documentos en la subcolección 'datosAreas'
+    final snapshot =
+        await FirebaseFirestore.instance
+            .collection('citas')
+            .doc(docID)
+            .collection('datosAreas')
+            .get();
+
+    if (snapshot.docs.isEmpty) {
+      showDialog(
+        context: context,
+        builder:
+            (_) => AlertDialog(
+              title: Text('Sin información adicional'),
+              content: Text('No hay datos adicionales para ${nombrePaciente}.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('Cerrar'),
+                ),
+              ],
+            ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder:
+          (_) => AlertDialog(
+            title: Text('Información adicional'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView(
+                shrinkWrap: true,
+                children:
+                    snapshot.docs.map((doc) {
+                      final area = doc.id;
+                      final datos = doc['datos'] as Map<String, dynamic>;
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '• $area',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          ...datos.entries.map(
+                            (e) => Text('${e.key}: ${e.value}'),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      );
+                    }).toList(),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('Cerrar'),
+              ),
+            ],
+          ),
+    );
+  }
 
   void programarNotificacion(
     DateTime fechaHora,
@@ -624,6 +693,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFFFE6EC),
       appBar: AppBar(
         title: const Text('Dayenú'),
         centerTitle: false,
@@ -862,7 +932,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                   Icon(
                                     Icons.calendar_today,
                                     size: 18,
-                                    color: Colors.grey[700],
+                                    color: Color(0xFF41A2AE),
                                   ),
                                   SizedBox(width: 6),
                                   Text('Fecha: $fechaStr'),
@@ -870,14 +940,34 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                   Icon(
                                     Icons.access_time,
                                     size: 18,
-                                    color: Colors.grey[700],
+                                    color: Color(0xFF41A2AE),
                                   ),
                                   SizedBox(width: 6),
                                   Text('Hora: $horaStr'),
                                 ],
                               ),
                               const SizedBox(height: 6),
-                              Text('Motivo: $motivo'),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Expanded(child: Text('Motivo: $motivo')),
+                                  GestureDetector(
+                                    onTap:
+                                        () => mostrarDatosArea(docID, nombre),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4.0,
+                                      ),
+                                      child: Icon(
+                                        Icons.more_horiz,
+                                        size: 18,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+
                               Text('Sala: $sala'),
                               Text('Teléfono: $telefono'),
                               const Divider(thickness: 1, color: Colors.grey),
@@ -889,13 +979,13 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          'Precio base: \$${precioBase.toStringAsFixed(2)}',
+                                          'Precio base: L${precioBase.toStringAsFixed(2)}',
                                         ),
                                         Text(
-                                          'Extras: \$${totalExtras.toStringAsFixed(2)}',
+                                          'Extras: L${totalExtras.toStringAsFixed(2)}',
                                         ),
                                         Text(
-                                          'Total: \$${total.toStringAsFixed(2)}',
+                                          'Total: L${total.toStringAsFixed(2)}',
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             color: Colors.teal,
@@ -912,9 +1002,26 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           IconButton(
+                                            onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder:
+                                                      (_) =>
+                                                          PantallaDatosEspecialidad(
+                                                            docID: docID,
+                                                            nombre: nombre,
+                                                          ),
+                                                ),
+                                              );
+                                            },
+                                            icon: Icon(Icons.dataset,
+                                            color: Color(0xFF41A2AE),),
+                                          ),
+                                          IconButton(
                                             icon: Icon(
                                               Icons.notifications,
-                                              color: Colors.amber,
+                                              color: Color(0xFF41A2AE),
                                             ),
                                             tooltip: 'Enviar recordatorio',
                                             onPressed: () {
@@ -928,7 +1035,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                           IconButton(
                                             icon: Icon(
                                               Icons.edit,
-                                              color: Colors.blueGrey,
+                                              color: Color(0xFF41A2AE),
                                             ),
                                             tooltip: 'Editar cita',
                                             onPressed:
@@ -943,9 +1050,37 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           IconButton(
+                                            onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder:
+                                                      (_) => PantallaTareas(
+                                                        docID: docID,
+                                                        nombre: nombre,
+                                                      ),
+                                                ),
+                                              );
+                                            },
+                                            icon: Icon(Icons.list_alt,
+                                            color: Color(0xFF41A2AE),),
+                                          ),
+                                          IconButton(
+                                            icon: Icon(
+                                              Icons.medical_services_outlined,
+                                              color: Color(0xFF41A2AE),
+                                            ),
+                                            tooltip: 'Ver extras',
+                                            onPressed:
+                                                () => abrirGestionDeExtras(
+                                                  docID,
+                                                  data,
+                                                ),
+                                          ),
+                                          IconButton(
                                             icon: Icon(
                                               Icons.delete,
-                                              color: Colors.redAccent,
+                                              color: Color(0xFF41A2AE),
                                             ),
                                             tooltip: 'Eliminar cita',
                                             onPressed: () {
@@ -991,18 +1126,6 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                                 },
                                               );
                                             },
-                                          ),
-                                          IconButton(
-                                            icon: Icon(
-                                              Icons.medical_services_outlined,
-                                              color: Colors.deepPurple,
-                                            ),
-                                            tooltip: 'Ver extras',
-                                            onPressed:
-                                                () => abrirGestionDeExtras(
-                                                  docID,
-                                                  data,
-                                                ),
                                           ),
                                         ],
                                       ),

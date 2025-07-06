@@ -35,10 +35,14 @@ android {
     }
 
     buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+        getByName("release") {
             signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }
@@ -49,4 +53,9 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
+    implementation("com.google.mlkit:text-recognition-chinese:16.0.0-beta1")
+    implementation("com.google.mlkit:text-recognition-devanagari:16.0.0-beta1")
+    implementation("com.google.mlkit:text-recognition-japanese:16.0.0-beta1")
+    implementation("com.google.mlkit:text-recognition-korean:16.0.0-beta1")
+
 }

@@ -27,38 +27,46 @@ class _NavegacionState extends State<Navegacion> {
         const PantallaUsuarios(),
         const PantallaReportes(),
       ];
-      items = const [
+      items = [
         BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_today),
+          icon: Icon(
+            _indiceActual == 0
+                ? Icons.calendar_today
+                : Icons.calendar_today_outlined,
+          ),
           label: 'Citas',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.message),
+          icon: Icon(
+            _indiceActual == 1 ? Icons.message : Icons.message_outlined,
+          ),
           label: 'Mensajes',
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.people),
-          label: 'Usuarios',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.description),
-          label: 'Reportes',
-        ),
+        if (widget.tipoUsuario != 'doctor')
+          BottomNavigationBarItem(
+            icon: Icon(
+              _indiceActual == 2 ? Icons.people : Icons.people_outline,
+            ),
+            label: 'Usuarios',
+          ),
+        if (widget.tipoUsuario == 'admin')
+          BottomNavigationBarItem(
+            icon: Icon(
+              _indiceActual == 3
+                  ? Icons.description
+                  : Icons.description_outlined,
+            ),
+            label: 'Reportes',
+          ),
       ];
     } else if (widget.tipoUsuario == "doctor") {
-      pantallas = [
-        const PantallaPrincipal(),
-        const PantallaMensajes(),
-      ];
+      pantallas = [const PantallaPrincipal(), const PantallaMensajes()];
       items = const [
         BottomNavigationBarItem(
           icon: Icon(Icons.calendar_today),
           label: 'Citas',
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.message),
-          label: 'Mensajes',
-        ),
+        BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Mensajes'),
       ];
     } else {
       pantallas = [
@@ -71,14 +79,8 @@ class _NavegacionState extends State<Navegacion> {
           icon: Icon(Icons.calendar_today),
           label: 'Citas',
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.message),
-          label: 'Mensajes',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.people),
-          label: 'Usuarios',
-        ),
+        BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Mensajes'),
+        BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Usuarios'),
       ];
     }
 
@@ -94,9 +96,9 @@ class _NavegacionState extends State<Navegacion> {
           ),
         ),
         child: BottomNavigationBar(
-          backgroundColor: Colors.blue.shade50,
-          selectedItemColor: const Color.fromRGBO(0, 150, 136, 1),
-          unselectedItemColor: Colors.grey,
+          backgroundColor: Color(0xFF579E93),
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.white,
           currentIndex: _indiceActual,
           type: BottomNavigationBarType.fixed,
           onTap: (index) {
