@@ -38,11 +38,53 @@ class _PantallaReportesState extends State<PantallaReportes> {
     return FirebaseFirestore.instance.collection('pacientes').snapshots();
   }
 
+  Widget _crearTarjetaMetrica(
+    IconData icono,
+    String titulo,
+    String valor,
+    Color color,
+  ) {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: color,
+      child: Container(
+        width: 160,
+        height: 100,
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: color,
+              child: Icon(icono, color: Color(0xFF009688)),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  titulo,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(valor, style: const TextStyle(fontSize: 16)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Reporte Mensual'),
+        backgroundColor: Color(0xFF009688),
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
@@ -90,215 +132,176 @@ class _PantallaReportesState extends State<PantallaReportes> {
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Selector mes y año
+            const SizedBox(height: 10),
+            // Selector de mes y año
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                DropdownButton<int>(
-                  value: _mesSeleccionado,
-                  items: List.generate(12, (index) {
-                    final mes = index + 1;
-                    return DropdownMenuItem(
-                      value: mes,
-                      child: Text(
-                        [
-                          'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
-                          'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
-                        ][index],
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Color(0xFFFFE6EC),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        value: _mesSeleccionado,
+                        icon: Icon(
+                          Icons.arrow_drop_down,
+                          color: Color(0xFF009688),
+                        ),
+                        dropdownColor: Colors.white,
+                        items: List.generate(12, (index) {
+                          final mes = index + 1;
+                          return DropdownMenuItem(
+                            value: mes,
+                            child: Text(
+                              [
+                                'Ene',
+                                'Feb',
+                                'Mar',
+                                'Abr',
+                                'May',
+                                'Jun',
+                                'Jul',
+                                'Ago',
+                                'Sep',
+                                'Oct',
+                                'Nov',
+                                'Dic',
+                              ][index],
+                              style: TextStyle(color: Colors.black),
+                            ),
+                          );
+                        }),
+                        onChanged: (valor) {
+                          if (valor != null) {
+                            setState(() => _mesSeleccionado = valor);
+                          }
+                        },
                       ),
-                    );
-                  }),
-                  onChanged: (valor) {
-                    if (valor != null) {
-                      setState(() => _mesSeleccionado = valor);
-                    }
-                  },
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 20),
-                DropdownButton<int>(
-                  value: _anioSeleccionado,
-                  items: List.generate(5, (index) {
-                    final anio = DateTime.now().year - index;
-                    return DropdownMenuItem(
-                      value: anio,
-                      child: Text(anio.toString()),
-                    );
-                  }),
-                  onChanged: (valor) {
-                    if (valor != null) {
-                      setState(() => _anioSeleccionado = valor);
-                    }
-                  },
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Color(0xFFFFE6EC),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [],
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        value: _anioSeleccionado,
+                        icon: Icon(
+                          Icons.arrow_drop_down,
+                          color: Color(0xFF009688),
+                        ),
+                        dropdownColor: Colors.white,
+                        items: List.generate(5, (index) {
+                          final anio = DateTime.now().year - index;
+                          return DropdownMenuItem(
+                            value: anio,
+                            child: Text(
+                              anio.toString(),
+                              style: TextStyle(color: Colors.black),
+                            ),
+                          );
+                        }),
+                        onChanged: (valor) {
+                          if (valor != null) {
+                            setState(() => _anioSeleccionado = valor);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
 
             const SizedBox(height: 20),
 
-            // Reportes
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // Citas
-                    StreamBuilder<QuerySnapshot>(
-                      stream: _obtenerCitasPorMes(),
-                      builder: (context, snapshotCitas) {
-                        if (snapshotCitas.hasError) {
-                          return const Text('Error al cargar citas');
-                        }
-                        if (snapshotCitas.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
+            // Métricas principales
+            StreamBuilder<QuerySnapshot>(
+              stream: _obtenerCitasPorMes(),
+              builder: (context, snapshotCitas) {
+                if (!snapshotCitas.hasData)
+                  return const CircularProgressIndicator();
 
-                        final citas = snapshotCitas.data!.docs;
-                        double totalIngresos = 0;
+                final citas = snapshotCitas.data!.docs;
+                double totalIngresos = 0;
 
-                        for (var doc in citas) {
-                          final data = doc.data() as Map<String, dynamic>;
+                for (var doc in citas) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  double precioBase =
+                      (data['precio'] != null)
+                          ? double.tryParse(data['precio'].toString()) ?? 0.0
+                          : 0.0;
+                  List<dynamic> extras = data['extras'] ?? [];
+                  double totalExtras = extras.fold(
+                    0.0,
+                    (suma, item) => suma + (item['monto'] ?? 0.0),
+                  );
+                  totalIngresos += precioBase + totalExtras;
+                }
 
-                          double precioBase =
-                              (data['precio'] != null)
-                                  ? double.tryParse(
-                                        data['precio'].toString(),
-                                      ) ??
-                                      0.0
-                                  : 0.0;
+                return StreamBuilder<QuerySnapshot>(
+                  stream: _obtenerPacientes(),
+                  builder: (context, snapshotPacientes) {
+                    if (!snapshotPacientes.hasData)
+                      return const CircularProgressIndicator();
 
-                          List<dynamic> extras = data['extras'] ?? [];
-                          double totalExtras = extras.fold(
-                            0.0,
-                            (suma, item) => suma + (item['monto'] ?? 0.0),
-                          );
+                    final totalPacientes = snapshotPacientes.data!.docs.length;
 
-                          double total = precioBase + totalExtras;
-                          totalIngresos += total;
-                        }
-
-                        return Card(
-                          color: Colors.blue.shade50,
-                          elevation: 5,
-                          margin: const EdgeInsets.only(bottom: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: SizedBox(
-                            width: double.infinity,
-                            height: 150,
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Citas del mes',
-                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Text('Total citas en ${_mesSeleccionado.toString().padLeft(2, '0')}/$_anioSeleccionado: ${citas.length}'),
-                                  Text('Ingresos totales: \$${totalIngresos.toStringAsFixed(2)}'),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-
-                    // Usuarios
-                    StreamBuilder<QuerySnapshot>(
+                    return StreamBuilder<QuerySnapshot>(
                       stream: _obtenerUsuarios(),
                       builder: (context, snapshotUsuarios) {
-                        if (snapshotUsuarios.hasError) {
-                          return const Text('Error al cargar usuarios');
-                        }
-                        if (snapshotUsuarios.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
+                        if (!snapshotUsuarios.hasData)
+                          return const CircularProgressIndicator();
 
-                        final usuarios = snapshotUsuarios.data!.docs;
-                        final Map<String, int> conteoRoles = {};
-                        for (var u in usuarios) {
-                          final rol = u['rol'] ?? 'desconocido';
-                          conteoRoles[rol] = (conteoRoles[rol] ?? 0) + 1;
-                        }
+                        final totalUsuarios =
+                            snapshotUsuarios.data!.docs.length;
 
-                        return Card(
-                          color: Colors.green.shade50,
-                          elevation: 5,
-                          margin: const EdgeInsets.only(bottom: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: SizedBox(
-                            width: double.infinity,
-                            height: 150,
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Usuarios',
-                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Text('Total usuarios: ${usuarios.length}'),
-                                  for (var rol in conteoRoles.keys)
-                                    Text(' - $rol: ${conteoRoles[rol]}'),
-                                ],
-                              ),
+                        return Wrap(
+                          spacing: 16,
+                          runSpacing: 16,
+                          children: [
+                            _crearTarjetaMetrica(
+                              Icons.event,
+                              'Citas',
+                              citas.length.toString(),
+                              Color(0xFFFFE6EC),
                             ),
-                          ),
+                            _crearTarjetaMetrica(
+                              Icons.attach_money,
+                              'Ingresos',
+                              'L${totalIngresos.toStringAsFixed(2)}',
+                              Color(0xFFFFE6EC),
+                            ),
+                            _crearTarjetaMetrica(
+                              Icons.people,
+                              'Pacientes',
+                              totalPacientes.toString(),
+                              Color(0xFFFFE6EC),
+                            ),
+                            _crearTarjetaMetrica(
+                              Icons.person_pin,
+                              'Usuarios',
+                              totalUsuarios.toString(),
+                              Color(0xFFFFE6EC),
+                            ),
+                          ],
                         );
                       },
-                    ),
-
-                    // Pacientes
-                    StreamBuilder<QuerySnapshot>(
-                      stream: _obtenerPacientes(),
-                      builder: (context, snapshotPacientes) {
-                        if (snapshotPacientes.hasError) {
-                          return const Text('Error al cargar pacientes');
-                        }
-                        if (snapshotPacientes.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
-                        }
-
-                        final pacientes = snapshotPacientes.data!.docs;
-
-                        return Card(
-                          color: Colors.orange.shade50,
-                          elevation: 5,
-                          margin: const EdgeInsets.only(bottom: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: SizedBox(
-                            width: double.infinity,
-                            height: 150,
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Pacientes',
-                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Text('Total pacientes: ${pacientes.length}'),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
+                    );
+                  },
+                );
+              },
             ),
           ],
         ),

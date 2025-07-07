@@ -96,7 +96,7 @@ class _NavegacionState extends State<Navegacion> {
           ),
         ),
         child: BottomNavigationBar(
-          backgroundColor: Color(0xFF579E93),
+          backgroundColor: Color(0xFF009688),
           selectedItemColor: Colors.white,
           unselectedItemColor: Colors.white,
           currentIndex: _indiceActual,

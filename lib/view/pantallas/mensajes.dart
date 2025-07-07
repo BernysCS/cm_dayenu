@@ -39,25 +39,26 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
   void _mostrarInfoDialog() {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Información"),
-        content: const Text(
-          "Aquí puedes seleccionar un mensaje rápido, escribir uno personalizado o escanear texto desde una imagen para enviarlo por WhatsApp.",
-        ),
-        actions: [
-          TextButton(
-            style: TextButton.styleFrom(
-              backgroundColor: const Color(0xFF009688),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+      builder:
+          (_) => AlertDialog(
+            title: const Text("Información"),
+            content: const Text(
+              "Aquí puedes seleccionar un mensaje rápido, escribir uno personalizado o escanear texto desde una imagen para enviarlo por WhatsApp.",
             ),
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cerrar"),
+            actions: [
+              TextButton(
+                style: TextButton.styleFrom(
+                  backgroundColor: const Color(0xFF009688),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cerrar"),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -91,36 +92,45 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: Wrap(
-          runSpacing: 12,
-          children: [
-            const Center(
-              child: Text(
-                "Selecciona la fuente del documento",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
+      builder:
+          (_) => Padding(
+            padding: const EdgeInsets.all(20),
+            child: Wrap(
+              runSpacing: 12,
+              children: [
+                const Center(
+                  child: Text(
+                    "Selecciona la fuente del documento",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.camera_alt,
+                    size: 16,
+                    color: Color(0xFF009688),
+                  ),
+                  title: const Text("Escanear con cámara"),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _escanearTexto(source: ImageSource.camera);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(
+                    Icons.photo_library,
+                    size: 16,
+                    color: Color(0xFF009688),
+                  ),
+                  title: const Text("Seleccionar desde galería"),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _escanearTexto(source: ImageSource.gallery);
+                  },
+                ),
+              ],
             ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt, size: 16,color: Color(0xFF009688)),
-              title: const Text("Escanear con cámara"),
-              onTap: () {
-                Navigator.pop(context);
-                _escanearTexto(source: ImageSource.camera);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library,size: 16,color: Color(0xFF009688)),
-              title: const Text("Seleccionar desde galería"),
-              onTap: () {
-                Navigator.pop(context);
-                _escanearTexto(source: ImageSource.gallery);
-              },
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -128,7 +138,8 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dayenú - Mensajes'),
+        title: const Text('Mensajes Rápidos'),
+        backgroundColor: Color(0xFF009688),
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
@@ -140,22 +151,18 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
       body: SafeArea(
         child: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(
-                "Mensajes rápidos",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Seleccione un mensaje predefinido para enviar:",
-                      style: TextStyle(fontSize: 16),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: const Text(
+                        "Seleccione un mensaje predefinido para enviar:",
+                        style: TextStyle(fontSize: 16),
+                      ),
                     ),
                     const SizedBox(height: 12),
 
@@ -169,10 +176,12 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
                         final mensaje = _mensajesPreestablecidos[index];
                         return ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.pink[100],
+                            backgroundColor: Color(0xFFF599B0),
                             elevation: 6,
                             padding: const EdgeInsets.symmetric(
-                                vertical: 16, horizontal: 16),
+                              vertical: 16,
+                              horizontal: 16,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -224,9 +233,22 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
                     TextFormField(
                       controller: _mensajeController,
                       maxLines: 3,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: "Mensaje personalizado",
-                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(color: Color(0xFF41A2AE)),
+                        border:
+                            OutlineInputBorder(), // por si quieres dejarlo como fallback
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Colors.grey,
+                          ), // cuando no está enfocado
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: Color(0xFF41A2AE),
+                            width: 2,
+                          ), // al hacer focus
+                        ),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -235,13 +257,14 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
                         return null;
                       },
                     ),
+
                     const SizedBox(height: 18),
                     Row(
                       children: [
                         Expanded(
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: ControllerColors.primary,
+                              backgroundColor: Color(0xFF009688),
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -255,7 +278,7 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
                             },
                             icon: const Icon(Icons.send, color: Colors.white),
                             label: const Text(
-                              "Enviar WhatsApp",
+                              "Enviar",
                               style: TextStyle(color: Colors.white),
                             ),
                           ),
@@ -264,7 +287,7 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
                         Expanded(
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blueAccent,
+                              backgroundColor: Color(0xFFF599B0),
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -273,7 +296,7 @@ class _PantallaMensajesState extends State<PantallaMensajes> {
                             onPressed: _mostrarOpcionesEscaneo,
                             icon: const Icon(
                               Icons.document_scanner,
-                              color: Color.fromARGB(255, 197, 207, 206), 
+                              color: Colors.white,
                             ),
                             label: const Text(
                               "Escanear",

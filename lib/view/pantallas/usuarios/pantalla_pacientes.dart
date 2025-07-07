@@ -243,7 +243,6 @@ class _PantallaPacientesState extends State<PantallaPacientes> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('pacientes').snapshots(),
         builder: (context, snapshot) {
@@ -272,6 +271,7 @@ class _PantallaPacientesState extends State<PantallaPacientes> {
                   vertical: 6.0,
                 ),
                 child: Card(
+                  color: const Color(0xFFFFE6EC),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -282,15 +282,95 @@ class _PantallaPacientesState extends State<PantallaPacientes> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Icon(Icons.person, color: Color(0xFF009688)),
-                            const SizedBox(width: 8),
-                            Text(
-                              data['nombre'] ?? '',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.person,
+                                  color: Color(0xFF009688),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  data['nombre'] ?? '',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.edit,
+                                    color: Color(0xFF009688),
+                                  ),
+                                  onPressed:
+                                      () => _mostrarFormulario(
+                                        pacienteExistente: paciente,
+                                      ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Color(0xFF009688),
+                                  ),
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder:
+                                          (ctx) => AlertDialog(
+                                            title: const Text(
+                                              '¿Eliminar Paciente?',
+                                            ),
+                                            content: const Text(
+                                              'Esta acción no se puede revertir.',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed:
+                                                    () => Navigator.pop(ctx),
+                                                child: const Text(
+                                                  'Cancelar',
+                                                  style: TextStyle(
+                                                    color: Color(0xFF009688),
+                                                  ),
+                                                ),
+                                              ),
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: const Color(
+                                                    0xFF009688,
+                                                  ),
+                                                  foregroundColor: Colors.white,
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 20,
+                                                        vertical: 12,
+                                                      ),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
+                                                  ),
+                                                ),
+                                                onPressed: () {
+                                                  _eliminarPaciente(
+                                                    paciente.id,
+                                                  );
+                                                  Navigator.pop(ctx);
+                                                },
+                                                child: const Text('Eliminar'),
+                                              ),
+                                            ],
+                                          ),
+                                    );
+                                  },
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -327,70 +407,6 @@ class _PantallaPacientesState extends State<PantallaPacientes> {
                             const Icon(Icons.badge, color: Color(0xFF009688)),
                             const SizedBox(width: 8),
                             Text('DNI: ${data['dni']}'),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.edit,
-                                color: Colors.orange,
-                              ),
-                              onPressed:
-                                  () => _mostrarFormulario(
-                                    pacienteExistente: paciente,
-                                  ),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete,
-                                color: Colors.redAccent,
-                              ),
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder:
-                                      (ctx) => AlertDialog(
-                                        title: const Text(
-                                          '¿Eliminar Paciente?',
-                                        ),
-                                        content: const Text(
-                                          'Esta acción no se puede revertir.',
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () => Navigator.pop(ctx),
-                                            child: const Text('Cancelar'),
-                                          ),
-                                          ElevatedButton(
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Color(
-                                                0xFF009688,
-                                              ), // Verde
-                                              foregroundColor: Colors.white,
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 20,
-                                                    vertical: 12,
-                                                  ),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                            ),
-                                            onPressed: () {
-                                              _eliminarPaciente(paciente.id);
-                                              Navigator.pop(ctx);
-                                            },
-                                            child: const Text('Eliminar'),
-                                          ),
-                                        ],
-                                      ),
-                                );
-                              },
-                            ),
                           ],
                         ),
                       ],

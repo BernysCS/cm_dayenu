@@ -1,7 +1,7 @@
 import 'package:cm_dayenu/firebase_options.dart';
 import 'package:cm_dayenu/view/navegacion.dart';
 import 'package:cm_dayenu/view/pantallas/login/login.dart';
-import 'package:cm_dayenu/controller/controller_colors.dart'; // Importamos el controlador de colores
+import 'package:cm_dayenu/controller/controller_colors.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';

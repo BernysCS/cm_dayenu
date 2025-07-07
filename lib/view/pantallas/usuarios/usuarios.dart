@@ -223,6 +223,7 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Usuarios'),
+          backgroundColor: Color(0xFF009688),
           actions: [
             IconButton(
               icon: const Icon(Icons.info_outline),
@@ -294,6 +295,7 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
                             vertical: 6.0,
                           ),
                           child: Card(
+                            color: Color(0xFFFFE6EC),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -310,34 +312,19 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
                                         color: Color(0xFF009688),
                                       ),
                                       const SizedBox(width: 8),
-                                      Text(
-                                        usuario['usuario'],
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
+                                      Expanded(
+                                        child: Text(
+                                          usuario['usuario'],
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.verified_user,
-                                        color: Color(0xFF009688),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text('Rol: ${usuario['rol']}'),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
                                       IconButton(
                                         icon: const Icon(
                                           Icons.edit,
-                                          color: Colors.orange,
+                                          color: Color(0xFF009688),
                                         ),
                                         onPressed:
                                             () => _mostrarFormulario(
@@ -347,7 +334,7 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
                                       IconButton(
                                         icon: const Icon(
                                           Icons.delete,
-                                          color: Colors.redAccent,
+                                          color: Color(0xFF009688),
                                         ),
                                         onPressed: () async {
                                           final confirmar = await showDialog<
@@ -366,6 +353,11 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
                                                     TextButton(
                                                       child: const Text(
                                                         'Cancelar',
+                                                        style: TextStyle(
+                                                          color: Color(
+                                                            0xFF41A2AE,
+                                                          ),
+                                                        ),
                                                       ),
                                                       onPressed:
                                                           () => Navigator.of(
@@ -376,7 +368,9 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
                                                       child: const Text(
                                                         'Eliminar',
                                                         style: TextStyle(
-                                                          color: Colors.red,
+                                                          color: Color(
+                                                            0xFF41A2AE,
+                                                          ),
                                                         ),
                                                       ),
                                                       onPressed:
@@ -393,6 +387,17 @@ class _PantallaUsuariosState extends State<PantallaUsuarios> {
                                           }
                                         },
                                       ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.verified_user,
+                                        color: Color(0xFF009688),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text('Rol: ${usuario['rol']}'),
                                     ],
                                   ),
                                 ],

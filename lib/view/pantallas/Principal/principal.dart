@@ -562,16 +562,17 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
             builder:
                 (context, setState) => AlertDialog(
                   title: const Text('Servicios extra'),
-                  content: SingleChildScrollView(
-                    child: Form(
-                      key: _formKey,
+                  content: SizedBox(
+                    width: double.maxFinite,
+                    child: SingleChildScrollView(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          SizedBox(
-                            height: 150,
-                            child: ListView.separated(
+                          // Lista de servicios extra agregados
+                          if (extras.isNotEmpty)
+                            ListView.separated(
                               shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
                               itemCount: extras.length,
                               separatorBuilder: (_, __) => const Divider(),
                               itemBuilder: (context, index) {
@@ -581,11 +582,13 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Text('\$${extra['monto']}'),
+                                      Text(
+                                        'L${extra['monto'].toStringAsFixed(2)}',
+                                      ),
                                       IconButton(
                                         icon: const Icon(
                                           Icons.delete,
-                                          color: Colors.red,
+                                          color: Color(0xFF009688),
                                         ),
                                         onPressed: () async {
                                           extras.removeAt(index);
@@ -600,50 +603,70 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                   ),
                                 );
                               },
+                            )
+                          else
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Text('No hay servicios extra agregados.'),
                             ),
-                          ),
+
                           const Divider(),
-                          TextFormField(
-                            controller: descripcionController,
-                            decoration: const InputDecoration(
-                              labelText: 'Descripción',
+
+                          // Formulario para agregar extras
+                          Form(
+                            key: _formKey,
+                            child: Column(
+                              children: [
+                                TextFormField(
+                                  controller: descripcionController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Descripción',
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Ingresa una descripción';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                TextFormField(
+                                  controller: montoController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Monto',
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Ingresa un monto';
+                                    }
+                                    final monto = double.tryParse(value.trim());
+                                    if (monto == null || monto <= 0) {
+                                      return 'Monto inválido';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ],
                             ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Ingresa una descripción';
-                              }
-                              return null;
-                            },
-                          ),
-                          TextFormField(
-                            controller: montoController,
-                            decoration: const InputDecoration(
-                              labelText: 'Monto',
-                            ),
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Ingresa un monto';
-                              }
-                              final monto = double.tryParse(value.trim());
-                              if (monto == null || monto <= 0) {
-                                return 'Monto inválido';
-                              }
-                              return null;
-                            },
                           ),
                         ],
                       ),
                     ),
                   ),
+
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Cerrar'),
+                      child: const Text('Cerrar', style: TextStyle(color: Color(0xFF009688)),),
                     ),
                     ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF009688),
+                        foregroundColor: Colors.white,
+                      ),
                       onPressed: () async {
-                        if (_formKey.currentState!.validate()) {
+                        if (_formKey.currentState != null &&
+                            _formKey.currentState!.validate()) {
                           String desc = descripcionController.text.trim();
                           double monto = double.parse(
                             montoController.text.trim(),
@@ -697,6 +720,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
       appBar: AppBar(
         title: const Text('Dayenú'),
         centerTitle: false,
+        backgroundColor: Color(0xFF009688),
         actions: [
           if (!_mostrarBusqueda)
             IconButton(
@@ -836,9 +860,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                   }
 
                   if (listaCitas.isEmpty) {
-                    return const Center(
-                      child: Text('No se encontraron citas con ese nombre.'),
-                    );
+                    return const Center(child: Text('No hay citas.'));
                   }
 
                   return ListView.builder(
@@ -906,7 +928,10 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.person, color: Colors.teal),
+                                  const Icon(
+                                    Icons.person,
+                                    color: Color(0xFF009688),
+                                  ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
@@ -932,7 +957,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                   Icon(
                                     Icons.calendar_today,
                                     size: 18,
-                                    color: Color(0xFF41A2AE),
+                                    color: Color(0xFF009688),
                                   ),
                                   SizedBox(width: 6),
                                   Text('Fecha: $fechaStr'),
@@ -940,7 +965,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                   Icon(
                                     Icons.access_time,
                                     size: 18,
-                                    color: Color(0xFF41A2AE),
+                                    color: Color(0xFF009688),
                                   ),
                                   SizedBox(width: 6),
                                   Text('Hora: $horaStr'),
@@ -961,7 +986,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                       child: Icon(
                                         Icons.more_horiz,
                                         size: 18,
-                                        color: Colors.grey[600],
+                                        color: Color(0xFF009688),
                                       ),
                                     ),
                                   ),
@@ -1015,13 +1040,15 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                                 ),
                                               );
                                             },
-                                            icon: Icon(Icons.dataset,
-                                            color: Color(0xFF41A2AE),),
+                                            icon: Icon(
+                                              Icons.dataset,
+                                              color: Color(0xFF009688),
+                                            ),
                                           ),
                                           IconButton(
                                             icon: Icon(
                                               Icons.notifications,
-                                              color: Color(0xFF41A2AE),
+                                              color: Color(0xFF009688),
                                             ),
                                             tooltip: 'Enviar recordatorio',
                                             onPressed: () {
@@ -1035,7 +1062,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                           IconButton(
                                             icon: Icon(
                                               Icons.edit,
-                                              color: Color(0xFF41A2AE),
+                                              color: Color(0xFF009688),
                                             ),
                                             tooltip: 'Editar cita',
                                             onPressed:
@@ -1062,13 +1089,15 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                                 ),
                                               );
                                             },
-                                            icon: Icon(Icons.list_alt,
-                                            color: Color(0xFF41A2AE),),
+                                            icon: Icon(
+                                              Icons.list_alt,
+                                              color: Color(0xFF009688),
+                                            ),
                                           ),
                                           IconButton(
                                             icon: Icon(
                                               Icons.medical_services_outlined,
-                                              color: Color(0xFF41A2AE),
+                                              color: Color(0xFF009688),
                                             ),
                                             tooltip: 'Ver extras',
                                             onPressed:
@@ -1080,7 +1109,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                           IconButton(
                                             icon: Icon(
                                               Icons.delete,
-                                              color: Color(0xFF41A2AE),
+                                              color: Color(0xFF009688),
                                             ),
                                             tooltip: 'Eliminar cita',
                                             onPressed: () {
@@ -1104,7 +1133,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                                           ).pop();
                                                         },
                                                         child: const Text(
-                                                          'Cancelar',
+                                                          'Cancelar', style: TextStyle(color: Color(0xFF009688)),
                                                         ),
                                                       ),
                                                       TextButton(
@@ -1118,7 +1147,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                                           ).pop();
                                                         },
                                                         child: const Text(
-                                                          'Eliminar',
+                                                          'Eliminar', style: TextStyle(color: Color(0xFF009688)),
                                                         ),
                                                       ),
                                                     ],
